@@ -1,0 +1,468 @@
+# This is a file written in Emacs and authored using org-mode (http://orgmode.org/)
+# The "README.md" file is generated from this file by running the
+# "M-x org-md-export-to-markdown" command from inside of Emacs.
+# 
+# The rest of the files are generated from this file by running the
+# "M-x org-babel-tangle" command from inside of Emacs.
+# 
+# The options below control the behavior of org-md-export-to-markdown:
+#
+# Don't render a Table of Contents 
+#+OPTIONS: toc:nil
+# Don't render section numbers
+#+OPTIONS: num:nil
+# Turn of subscript parsing: http://super-user.org/wordpress/2012/02/02/how-to-get-rid-of-subscript-annoyance-in-org-mode/comment-page-1/
+#+OPTIONS: ^:{}
+* Introduction
+  The Okta Application Network is a collection of more than 4000
+  prebuilt application connectors. Integrating with customers’
+  identity infrastructures is a top requirement for cloud Independent
+  Software Vendors (ISVs).
+
+  For an improved and secure login experience, enabling Single Sign-On
+  for your application with protocols like SAML. See Single Sign-On
+  with Okta for more information on allowing end users to log into
+  your application using corporate credentials link here.  In the case
+  of an Active Directory deployment, end users can effectively log
+  into your application with their Active Directory credentials.
+
+  Equally important is the ability to provision and deprovision
+  accounts in your application by integrating with your customers’
+  user lifecycles.  Many companies use Active Directory as the trigger
+  for account provisioning.  Some companies use Human Resource
+  Management Systems (HRMS) such as Workday to drive account
+  provisioning. Okta already integrates with those systems.  All you
+  need to do is expose a set of APIs – to allow Okta to perform
+  operations such as account creation, updates, and entitlement
+  assignments (groups or roles) in your application.
+
+  Once your APIs are ready, you can use Okta Cloud Provisioning
+  Connector (CPC) to integrate your APIs with Okta quickly.
+
+* Typical Deployment
+  In a typical deployment, Okta imports users from AD or an HRMS with
+  the lightweight Okta AD agent. It then uses the Cloud Provisioning
+  Connector that is built using this SDK to sync users to the cloud
+  app. The CPC is a shim that translates CRUD-like user operations
+  from Okta to the Cloud App's API. Okta hosts the CPC in the cloud
+  and the completed provisioning integration is made available to any
+  Okta customer as part of the Okta Application Network, after going
+  through a rigorous quality verification process. 
+* Understanding of User Provisioning in Okta
+  The following points summarize user provisioning in Okta.
+
+  Okta is a universal directory with the main focus in storing
+  identity related information.  Users can be created in Okta directly
+  as local users, or can be imported from external systems like AD/HR.
+  The basic schema contains many of the standard user attributes such
+  as first name, last name, email, etc.  The schema can be extended.
+
+
+  Attributes can be mapped from a source into Okta, and can be mapped
+  from Okta to a target.  In addition to user attributes, entitlements
+  of an app can also be imported from an application and be used
+  during account creation to control fine-grained authorization in the
+  app.  Examples of these would be role or group-like assignments in
+  the target application.  If exposed through the API, Okta can help
+  manage them as well and assign the appropriate entitlements during
+  creation and updates.
+
+
+  There are three main operations in the provisioning lifecycle.
+  - Creation of an account in an app.
+  - Update of an account (user profile changes, entitlement changes).
+  - Deactivation of an account in an app.
+
+  In Okta, an application instance is a connector that provides SSO
+  and provisioning functionality with the target application.  CPC is
+  the code supporting the provisioning portion of the logic.  The
+  interfaces in CPC is where you would implement the logic to perform
+  various account lifecycle operations leveraging the APIs provided by
+  you and your application.
+
+
+  *Account Creation in your app*
+  - When a user is in an active state in Okta, you can associate an application with a user in multiple ways
+    - Direct assignment where you associate the app with the user directly
+      - If there are entitlements, they have to be manually assigned through the UI.
+    - Group-based assignment – where an app is associated with a group – and the user becomes a member of a group 
+      - If there are entitlements, at the time when the app is associated with the group, the admin picks the right set of entitlements that are applicable to users in this group.
+  *Account Update*
+  - There is an update when Okta detects a profile change of a user.
+    - From a master like AD/HR.
+    - From a direct change of a profile attribute in Okta for a local user
+  - All apps assigned to the user with provisioning support are evaluated and where appropriate, updates are made against the target app
+
+  *Deactivation*
+  - Happens when the application is “unassigned” from the user in the
+    following ways.
+    - Unassigning the app manually if user was originally assigned the app manually.
+    - If user was originally assigned the app as a member of a group where the app is associated, remove the user from the group
+    - When a user is deactivated in Okta, either manually or triggered by an external master such as AD or HR.
+
+  While you will be testing your code within the CPC framework in a
+  more granular way based on the interfaces, it is important to
+  understand the key operations above as those will ultimately be
+  driving the user management capabilities once your app is integrated
+  into Okta.
+* Planning for SCIM
+  There are some requirements for your APIs to coordinate them with
+  the Okta provisioning lifecycle.  An important part of your planning
+  process is determining which provisioning features to support and
+  which will not be supported. Equally important is determining which
+  API calls for Okta to make to your API in response to the supported
+  provisioning events. The following sections discuss which user
+  management capabilities your API must support, explain the various
+  provisioning features that you can choose to support, and introduce
+  you to the Javadoc for the Cloud Provisioning Connector where you
+  can learn more about the specifics of the SDK.
+
+** Required SCIM capabilities
+   Your API should have the following capabilities in order to optimize CPC and Okta’s provisioning capabilities:
+*** Base URL
+    MUST be =https=
+*** Authentication
+    APIs that perform user management functions must be secured against
+    unauthorized access. Okta's Cloud Provisioning Connector currently
+    supports the following three authentication mechanisms:
+
+    1. OAuth 2.0
+    2. Basic
+    3. Header
+*** /Users
+**** GET
+     #+NAME: users_get
+     #+BEGIN_SRC python
+       @app.route("/scim/v2/Users", methods=['GET'])
+       def users_get():
+           found = []
+           request_filter = request.args.get('filter')
+           if request_filter:
+               m = re.match('(\w+) eq "([^"]*)"', request_filter)
+               (search_key_name, search_value) = m.groups()
+               search_key = getattr(User, search_key_name)
+               found = session.query(User).filter(search_key == search_value).all()
+           else:
+               found = session.query(User).all()
+
+           # Is this correct?
+           # Should I be returning an empty set? Maybe with 404?
+           if len(found) == 0:
+               return "Not found", 404
+
+           rv = ListResponse(found)
+           return json.dumps(rv.to_scim_resource())
+     #+END_SRC
+**** POST
+     #+NAME: users_post
+     #+BEGIN_SRC python
+       @app.route("/scim/v2/Users", methods=['POST'])
+       def users_post():
+           scim_user = request.get_json()
+           user = User(scim_user)
+           session.add(user)
+           session.commit()
+           resp = flask.jsonify(user.to_scim_resource())
+           send_to_browser(user.to_scim_resource())
+           resp.headers['Location'] = url_for('user_get',
+                                              user_id=user.userName,
+                                              _external=True)
+           return resp, 201
+     #+END_SRC
+*** /Users/{id}
+**** GET
+     #+NAME: user_get
+     #+BEGIN_SRC python
+       @app.route("/scim/v2/Users/<user_id>", methods=['GET'])
+       def user_get(user_id):
+           user = session.query(User).filter(User.id == user_id).one()
+           rv = user.to_scim_resource()
+           send_to_browser(rv)
+           return json.dumps(rv)
+     #+END_SRC
+**** PATCH
+     #+NAME: user_patch
+     #+BEGIN_SRC python
+       @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
+       def users_patch(user_id):
+           scim_user = request.get_json()
+           if 'schemas' not in scim_user:
+               return "Payload must contain 'schemas' attribute.", 400
+           schema_other = 'urn:ietf:params:scim:schemas:core:2.0:User'
+           if schema_other not in scim_user['schemas']:
+               return "The 'schemas' type in this request is not supported.", 501
+           del(scim_user['id'])
+           del(scim_user['schemas'])
+           user = session.query(User).filter(User.id == user_id).one()
+           for key in scim_user.keys():
+               setattr(user, key, scim_user[key])
+           session.add(user)
+           session.commit()
+           send_to_browser(user.to_scim_resource())
+           #FIXME: What goes here?
+           return ""
+     #+END_SRC
+*** /Groups							   :noexport:
+**** GET
+**** POST							   :noexport:
+*** /Groups/{id} 						   :noexport:
+**** GET
+**** DELETE
+*** Filtering on =id=, =externalId=, =userName=, and =emails=
+    Filtering on Resources for Query (Must be able to filter on attributes =id=, =externalId=, =userName= and =emails=)
+    (=userName eq jane@example.com= or =emails eq jane@example.com=)
+*** Filter on =metadata.lastModified= 				   :noexport:
+*** Resource Paging
+    When returning large lists of resources, most APIs will implement
+    an API pagination scheme to return smaller groups of resources at
+    a time.
+
+    A cache key or token based pagination scheme is preferable to a
+    scheme that uses limit and offset parameters. This is because a
+    cache key or token based pagination scheme allows Okta to quickly
+    get a list of changes made since the last query. Limit and offset
+    schemes require Okta to request a full list of resources each time
+    it makes a query to capture all changes to user resources made
+    between the last query and the current query.
+*** /Schemas							   :noexport:
+*** /ServiceProviderConfig					   :noexport:
+*** Standard SCIM support (Copy from CPC) 			   :noexport:
+   1. Search user by username or email address
+      This is a critical part of any Cloud Provisioning
+      Connector. Your system MUST have a way to find a user by
+      username or email address. This is required because most
+      provisioning actions require the ability to determine if a user
+      record exists on your system.
+
+      Consider the scenario where an Okta customer with thousands of
+      users has a provisioning integration with your system, which
+      also has thousands  of users. When an Okta customer adds a new
+      user to their Okta organization, Okta needs a way to determine
+      quickly if a record for the newly created user was previously
+      created on your system.
+
+      Okta requires the ability to look up users.  In the case of user
+      creation and other user operations, Okta needs to be able to
+      look up a user based on username (eg. look for duplicates before
+      creation of a new user).  You need to support search based on
+      username at the very least - assuming username is unique which
+      should be the case.  Some applications may have more complicated
+      naming conventions.  If you are unclear about this, contact
+      developer@okta.com.
+   2. Basic user schema
+      Your API must also have user records capable of storing the
+      following four user attributes:
+
+      1. User ID
+      2. First Name
+      3. Last Name
+      4. Email
+
+      Note that Okta supports more than the four user attributes listed
+      above.  However, these four attributes are the base attributes
+      that you must support.  Please note here that User ID and Email
+      are separate attributes.
+
+      If your service supports user attributes beyond those four base
+      attributes you will need to expose those additional attributes
+      also.
+
+      - Required attributes for every Okta customer uses must go in
+        the profiles.json file. For more information, see the "Writing
+        Your Cloud Provisioning Connector" section, below.
+
+      - Optional attributes that are only for some Okta customers are
+        exposed through your API. They are consumed through the
+        ImportUserAttributesService interface, which is described
+        below.
+
+     Best Practice: Keep the User ID distinct from the email
+     address. Many systems use an email address as a user identifier,
+     but this is not recommended, as email addresses can change. Using
+     a unique User ID to identify user resources can prevent serious
+     issues in the future.
+   3. Account Creation
+      You should have an API that allows the creation of a new
+      account.  It must support basic 4 attributes listed above along
+      with any additional attributes the application supports.  If the
+      application supports entitlements, the API should allow
+      configuration of those as well.
+
+      An immutable or system ID of the user should be returned to Okta.
+   4. Account Update
+      You should have an API that allows account update at the
+      attribute level.  If entitlements are supported, API should also
+      be provided to allow for that.
+   5. Account Deactivation
+      You should have an API for account deactivation.  Depending on
+      how this is done, it may just be an attribute update
+      (eg. active=false).  Regardless, you need to implement support
+      for that.  Deprovisioning is perhaps one of the most important
+      reason customers want your application to support provisioning
+      with Okta.
+   6. Bulk Import
+      You should support the ability to bulk import users (and
+      entitlements like groups if available).  It allows Okta to fetch
+      all user records in an efficient manner for reconciliation and
+      initial bootstrap (to get all users from your app into the
+      system).
+   7. Password
+      This is an optional requirement.  If your application supports
+      SSO protocol such as SAML, then you probably do not need this.
+      Certain applications may have a need for a password to support
+      clients where SSO is not possible. (eg. email clients may need
+      password for google apps)
+
+*** Rate Limiting
+    Some customer actions, such as adding hundreds of users at once,
+    will result in large bursts of HTTP requests to your SCIM API. For
+    scenarios like this, we suggest that your SCIM API return rate
+    limiting information to Okta via the [[https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#429][HTTP 429 Too Many Requests]]
+    status code. This will help Okta throttle the rate at which SCIM
+    requests are made to your API.
+**** TODO Is this required? 					   :noexport:
+**** TODO We should rate limit ourselves if we notice the API starting to slow down?
+** Recommended SCIM capabilities
+   In addition to the required API capabilities above, we recommend
+   that your SCIM API support the following capabilities, which will
+   help ensure that your integration with Okta will perform well in
+   organizations with thousands of users.
+*** HTTP PATCH
+** SCIM Features not implemented by Okta
+*** Querying with POST
+*** DELETE /Users/{id}
+    Okta doesn't delete users
+*** Bulk Operations
+*** /me
+* Files								   :noexport:
+** scim-server.py
+   #+BEGIN_SRC python :tangle scim-server.py :noweb yes :exports none :padline no
+     import json
+     import re
+
+     from flask import Flask
+     from flask import render_template
+     from flask import request
+     from flask import url_for
+     from flask_socketio import SocketIO, emit
+     from sqlalchemy import Column, Integer, String, Boolean
+     from sqlalchemy import create_engine
+     from sqlalchemy.ext.declarative import declarative_base
+     from sqlalchemy.orm import sessionmaker
+     import flask
+
+
+     Base = declarative_base()
+
+
+     class ListResponse():
+         def __init__(self, list):
+             self.list = list
+
+         def to_scim_resource(self):
+             rv = {
+                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+                 "totalResults": 0,
+                 "Resources": []
+             }
+             resources = []
+             for item in self.list:
+                 resources.append(item.to_scim_resource())
+             rv['totalResults'] = len(resources)
+             rv['Resources'] = resources
+             return rv
+
+
+     class User(Base):
+         __tablename__ = 'users'
+         id = Column(Integer, primary_key=True)
+         externalId = Column(String(250))
+         userName = Column(String(250), unique=True, nullable=False)
+         familyName = Column(String(250))
+         middleName = Column(String(250))
+         givenName = Column(String(250))
+         locale = Column(String(250))
+         timezone = Column(String(250))
+         active = Column(Boolean, default=False)
+
+         def __init__(self, resource):
+             for attribute in ['userName', 'locale', 'timezone', 'active']:
+                 if attribute in resource:
+                     setattr(self, attribute, resource[attribute])
+             for attribute in ['givenName', 'middleName', 'familyName']:
+                 if attribute in resource['name']:
+                     setattr(self, attribute, resource['name'][attribute])
+
+         def to_scim_resource(self):
+             rv = {
+                 "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                 "id": self.id,
+                 "userName": self.userName,
+                 "name": {
+                     "familyName": self.familyName,
+                     "givenName": self.givenName,
+                     "middleName": self.middleName,
+                 },
+                 "active": self.active,
+                 "locale": self.locale,
+                 "timezone": self.timezone,
+                 "meta": {
+                     "resourceType": "User",
+                     # "created": "2010-01-23T04:56:22Z",
+                     # "lastModified": "2011-05-13T04:42:34Z",
+                     # "location":
+                     # "https://example.com/v2/Users/2819c223-7f76-453a-413861904646"
+                 }
+             }
+             return rv
+
+     engine = create_engine('sqlite:///test-users.db')
+     Base.metadata.bind = engine
+     DBSession = sessionmaker(bind=engine)
+     session = DBSession()
+
+     app = Flask(__name__)
+     socketio = SocketIO(app)
+
+
+     def send_to_browser(obj):
+         socketio.emit('user',
+                       {'data': obj},
+                       broadcast=True,
+                       namespace='/test')
+
+
+     @socketio.on('connect', namespace='/test')
+     def test_connect():
+         # emit('my response', {'data': 'Connected'})
+         for user in session.query(User).all():
+             emit('user', {'data': user.to_scim_resource()})
+
+
+     @socketio.on('disconnect', namespace='/test')
+     def test_disconnect():
+         print('Client disconnected')
+
+
+     @app.route('/')
+     def hello():
+         return render_template('base.html')
+
+
+     <<user_get>>
+
+
+     <<users_post>>
+
+
+     <<user_patch>>
+
+
+     <<users_get>>
+
+     if __name__ == "__main__":
+         app.debug = True
+         # app.run()
+         socketio.run(app)
+        
+   #+END_SRC
