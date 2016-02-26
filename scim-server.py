@@ -1,53 +1,59 @@
-import json
 import re
 
 from flask import Flask
 from flask import render_template
 from flask import request
 from flask import url_for
-from flask_socketio import SocketIO, emit
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from flask_socketio import SocketIO
+from flask_socketio import emit
+from flask_sqlalchemy import SQLAlchemy
 import flask
 
 
-Base = declarative_base()
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
+db = SQLAlchemy(app)
+socketio = SocketIO(app)
 
 
 class ListResponse():
-    def __init__(self, list):
+    def __init__(self, list, start_index=1, count=None, total_results=0):
         self.list = list
+        self.start_index = start_index
+        self.count = count
+        self.total_results = total_results
 
     def to_scim_resource(self):
         rv = {
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-            "totalResults": 0,
+            "totalResults": self.total_results,
+            "startIndex": self.start_index,
             "Resources": []
         }
         resources = []
         for item in self.list:
             resources.append(item.to_scim_resource())
-        rv['totalResults'] = len(resources)
+        if self.count:
+            rv['itemsPerPage'] = self.count
         rv['Resources'] = resources
         return rv
 
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    externalId = Column(String(250))
-    userName = Column(String(250), unique=True, nullable=False)
-    familyName = Column(String(250))
-    middleName = Column(String(250))
-    givenName = Column(String(250))
-    locale = Column(String(250))
-    timezone = Column(String(250))
-    active = Column(Boolean, default=False)
+    id = db.Column(db.Integer, primary_key=True)
+    externalId = db.Column(db.String(250))
+    userName = db.Column(db.String(250), unique=True, nullable=False)
+    active = db.Column(db.Boolean, default=False)
+    familyName = db.Column(db.String(250))
+    middleName = db.Column(db.String(250))
+    givenName = db.Column(db.String(250))
 
     def __init__(self, resource):
-        for attribute in ['userName', 'locale', 'timezone', 'active']:
+        self.update(resource)
+
+    def update(self, resource):
+        for attribute in ['userName', 'active']:
             if attribute in resource:
                 setattr(self, attribute, resource[attribute])
         for attribute in ['givenName', 'middleName', 'familyName']:
@@ -65,25 +71,25 @@ class User(Base):
                 "middleName": self.middleName,
             },
             "active": self.active,
-            "locale": self.locale,
-            "timezone": self.timezone,
             "meta": {
                 "resourceType": "User",
+                "location": url_for('user_get',
+                                    user_id=self.id,
+                                    _external=True),
                 # "created": "2010-01-23T04:56:22Z",
                 # "lastModified": "2011-05-13T04:42:34Z",
-                # "location":
-                # "https://example.com/v2/Users/2819c223-7f76-453a-413861904646"
             }
         }
         return rv
 
-engine = create_engine('sqlite:///test-users.db')
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
 
-app = Flask(__name__)
-socketio = SocketIO(app)
+def scim_error(message, error_code):
+    rv = {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        "detail": message,
+        "status": str(error_code)
+    }
+    return flask.jsonify(rv), error_code
 
 
 def send_to_browser(obj):
@@ -93,10 +99,17 @@ def send_to_browser(obj):
                   namespace='/test')
 
 
+def render_json(obj):
+    rv = obj.to_scim_resource()
+    send_to_browser(rv)
+    return flask.jsonify(rv)
+
+
 @socketio.on('connect', namespace='/test')
 def test_connect():
-    # emit('my response', {'data': 'Connected'})
-    for user in session.query(User).all():
+    for user in User.query.all():
+        if not user.active:
+            continue
         emit('user', {'data': user.to_scim_resource()})
 
 
@@ -112,67 +125,85 @@ def hello():
 
 @app.route("/scim/v2/Users/<user_id>", methods=['GET'])
 def user_get(user_id):
-    user = session.query(User).filter(User.id == user_id).one()
-    rv = user.to_scim_resource()
-    send_to_browser(rv)
-    return json.dumps(rv)
+    user = User.query.filter_by(id=user_id).one()
+    return render_json(user)
 
 
 @app.route("/scim/v2/Users", methods=['POST'])
 def users_post():
-    scim_user = request.get_json()
-    user = User(scim_user)
-    session.add(user)
-    session.commit()
-    resp = flask.jsonify(user.to_scim_resource())
-    send_to_browser(user.to_scim_resource())
+    user_resource = request.get_json()
+    user = User(user_resource)
+    db.session.add(user)
+    db.session.commit()
+    rv = user.to_scim_resource()
+    send_to_browser(rv)
+    resp = flask.jsonify(rv)
     resp.headers['Location'] = url_for('user_get',
                                        user_id=user.userName,
                                        _external=True)
+    # https://tools.ietf.org/html/rfc7644#section-3.3
     return resp, 201
+
+
+@app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
+def users_put(user_id):
+    user_resource = request.get_json()
+    user = User.query.filter_by(id=user_id).one()
+    user.update(user_resource)
+    db.session.add(user)
+    db.session.commit()
+    return render_json(user)
 
 
 @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
 def users_patch(user_id):
-    scim_user = request.get_json()
-    if 'schemas' not in scim_user:
-        return "Payload must contain 'schemas' attribute.", 400
-    schema_other = 'urn:ietf:params:scim:schemas:core:2.0:User'
-    if schema_other not in scim_user['schemas']:
+    patch_resource = request.get_json()
+    for attribute in ['schemas', 'Operations']:
+        if attribute not in patch_resource:
+            message = "Payload must contain '{}' attribute.".format(attribute)
+            return message, 400
+    schema_patchop = 'urn:ietf:params:scim:api:messages:2.0:PatchOp'
+    if schema_patchop not in patch_resource['schemas']:
         return "The 'schemas' type in this request is not supported.", 501
-    del(scim_user['id'])
-    del(scim_user['schemas'])
-    user = session.query(User).filter(User.id == user_id).one()
-    for key in scim_user.keys():
-        setattr(user, key, scim_user[key])
-    session.add(user)
-    session.commit()
-    send_to_browser(user.to_scim_resource())
-    #FIXME: What goes here?
-    return ""
+    user = User.query.filter_by(id=user_id).one()
+    for operation in patch_resource['Operations']:
+        if 'op' not in operation and operation['op'] != 'replace':
+            continue
+        value = operation['value']
+        for key in value.keys():
+            setattr(user, key, value[key])
+    db.session.add(user)
+    db.session.commit()
+    return render_json(user)
 
 
 @app.route("/scim/v2/Users", methods=['GET'])
 def users_get():
-    found = []
     request_filter = request.args.get('filter')
+    query = User.query
+    match = None
     if request_filter:
-        m = re.match('(\w+) eq "([^"]*)"', request_filter)
-        (search_key_name, search_value) = m.groups()
+        match = re.match('(\w+) eq "([^"]*)"', request_filter)
+    if match:
+        (search_key_name, search_value) = match.groups()
         search_key = getattr(User, search_key_name)
-        found = session.query(User).filter(search_key == search_value).all()
-    else:
-        found = session.query(User).all()
-
-    # Is this correct?
-    # Should I be returning an empty set? Maybe with 404?
-    if len(found) == 0:
-        return "Not found", 404
-
-    rv = ListResponse(found)
-    return json.dumps(rv.to_scim_resource())
+        query = query.filter(search_key == search_value)
+    count = int(request.args.get('count', 100))
+    start_index = int(request.args.get('startIndex', 1))
+    if start_index < 1:
+        start_index = 1
+    # SCIM is '1' indexed, but SQL is '0' indexed
+    start_index -= 1
+    query = query.offset(start_index).limit(count)
+    # print(str(query.statement))
+    total_results = query.count()
+    found = query.all()
+    rv = ListResponse(found,
+                      start_index=start_index,
+                      count=count,
+                      total_results=total_results)
+    return flask.jsonify(rv.to_scim_resource())
 
 if __name__ == "__main__":
     app.debug = True
-    # app.run()
     socketio.run(app)
