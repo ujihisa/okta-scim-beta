@@ -1,37 +1,39 @@
-# Introduction
+# Welcome to the Okta SCIM Beta
 
-The Okta Application Network is a collection of more than 4000
-prebuilt application connectors. Integrating with customers'
-identity infrastructures is a top requirement for cloud Independent
-Software Vendors (ISVs).
+Thank you for your interest in the Okta SCIM beta.
 
-For an improved and secure login experience, enabling Single Sign-On
-for your application with protocols like SAML. See [Single Sign-On
-with Okta](http://developer.okta.com/docs/guides/saml_guidance.html) for more information on allowing end users to log into
-your application using corporate credentials link here.  In the case
-of an Active Directory deployment, end users can effectively log
-into your application with their Active Directory credentials.
+> System for Cross-domain Identity Management (SCIM) is an open
+> standard for automating the exchange of user identity information
+> between identity domains, or IT systems.
 
-Equally important is the ability to provision and deprovision
-accounts in your application by integrating with your customers'
-user lifecycles.  Many companies use Active Directory as the trigger
-for account provisioning.  Some companies use Human Resource
-Management Systems (HRMS) such as Workday to drive account
-provisioning. Okta already integrates with those systems.  All you
-need to do is expose a SCIM API – to allow Okta to perform
-operations such as account creation, updates, and entitlement
-assignments (groups or roles) to your application.
+(From the [Wikipedia article on SCIM](https://en.wikipedia.org/wiki/System_for_Cross-domain_Identity_Management))
 
-# Beta
+If you are a developer for a cloud application, Okta will allow you
+to receive user provisioning and profile update message from Okta
+using the open SCIM standard.
 
-(FIXME: Fill this out in detail)
+# Getting into the Okta SCIM Beta
 
--   Beta Warning
--   Getting into the beta
+To request access to the Okta SCIM beta, send an email [oan@okta.com](oan@okta.com)
+with the following information:
+
+1.  The `oktapreview.com` Okta org that you will use to develop your
+    SCIM integration. (If you don't have an Okta org yet, create an
+    [Okta Developer Edition](https://www.okta.com/developer/signup/) org.)
+2.  The Base URL that Okta should use to send SCIM requests to your service.
+3.  The Authentication method that Okta will use to authenticate with
+    your service.
+
+Details on the Base URL (See section ) and Authentication (See section ) method are covered below.
+
+Upon approval into the Okta SCIM beta, your `oktapreview.com` Okta
+org will be enabled for the SCIM beta and a template SCIM
+integration will be added to that org.
+
+Once you get the SCIM template in your Okta org, you will be able to
+start testing on your SCIM integration directly with Okta.
 
 # Understanding of User Provisioning in Okta
-
-The following points summarize user provisioning in Okta.
 
 Okta is a universal directory with the main focus in storing
 identity related information.  Users can be created in Okta directly
@@ -43,37 +45,19 @@ but will always contain a user name, first name, last name, and
 email address. This schema can be extended.
 
 Okta user attributes can be mapped from a source into Okta, and can
-be mapped from Okta to a target.  In addition to user attributes and
-entitlements of an application can also be imported from an
-application and used during account creation to control
-fine-grained authorization.  Examples of these would be role or
-group-like assignments in the target application.  If exposed
-through SCIM, Okta can help manage these users as well and assign
-the appropriate entitlements during creation and updates.
+be mapped from Okta to a target.
 
-Below are the main operations in the SCIM user provisioning lifecycle:
+Below are the main operations in Okta's SCIM user provisioning lifecycle:
 
 1.  Creation of a user account.
 2.  Read a list of accounts, with support for searching for a preexisting account.
 3.  Update of an account (user profile changes, entitlement changes, etc).
 4.  Deactivation of an account.
 
-In Okta, an application instance is a connector that provides SSO
-and provisioning functionality with the target application.  
-
-SCIM is the protocol supporting the provisioning portion of the
-logic.
-
-# Explain process for submitting to Okta
-
-(FIXME: Fill out this section)
+In Okta, an application instance is a connector that provides Single Sign-On
+and provisioning functionality with the target application.
 
 # Required SCIM capabilities
-
-There are some requirements for your SCIM API to coordinate with
-the Okta provisioning lifecycle.  An important part of your planning
-process is determining which provisioning features your API can or
-should support and which do not need to be supported. 
 
 Okta supports provisioning to both SCIM 1.1 and SCIM 2.0 APIs.
 
@@ -82,9 +66,14 @@ SCIM 2.0.
 
 Okta implements SCIM 2.0 as described in RFCs [7642](https://tools.ietf.org/html/rfc7642), [7643](https://tools.ietf.org/html/rfc7643), [7644](https://tools.ietf.org/html/rfc7644).
 
-Note: You don't need to fully implement the SCIM 2.0 specification to work
-with Okta. At a minimum, Okta requires that your SCIM 2.0 API
-implement the features described below:
+If you are writing a SCIM implementation for the first time, an
+important part of your planning process will be determining which of
+Okta's provisioning features your SCIM API can or should support and
+which features you do not need to support.
+
+Specifically, you don't need to fully implement the SCIM 2.0
+specification to work with Okta. At a minimum, Okta requires that
+your SCIM 2.0 API implement the features described below:
 
 ## Base URL
 
@@ -104,8 +93,8 @@ Your SCIM API **MUST** be secured against anonymous access. At the
 moment, Okta supports authentication against SCIM APIs via one of
 the following methods:
 
-1.  OAuth 2.0
-2.  Basic Authentication
+1.  [OAuth 2.0](http://oauth.net/2/)
+2.  [Basic Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication)
 3.  Custom HTTP Header
 
 ## Basic user schema
@@ -119,21 +108,21 @@ attributes:
 4.  Email (`emails`)
 
 Note that Okta supports more than the four user attributes listed
-above.  However, these four attributes are the base attributes
-that you must support. 
+above.  However, these four attributes are the base attributes that
+you must support.  The full user schema for SCIM 2.0 is described
+in [section 4 of RFC 7643](https://tools.ietf.org/html/rfc7643#section-4).
 
-The full user schema for SCIM 2.0 is described in
-[section 4 of RFC 7643](https://tools.ietf.org/html/rfc7643#section-4).
-
-> **Best Practice:** Keep your User ID distinct from the user's email
-> address. Many systems use an email address as a user identifier,
+> **Best Practice:** Keep your User ID distinct from the User Email
+> Address. Many systems use an email address as a user identifier,
 > but this is not recommended, as email addresses often change. Using
-> a unique User ID to identify user resources can prevent
-> future complications.
+> a unique User ID to identify user resources will prevent future
+> complications.
 
 If your service supports user attributes beyond those four base
-attributes you will need to expose those additional attributes
-also.
+attributes you will need to add support for those additional
+attributes to your SCIM API. In some cases, you may need to
+configure Okta to map non-standard user attributes into the user
+profile for your application.
 
 ## Functionality
 
