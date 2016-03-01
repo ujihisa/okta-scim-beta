@@ -574,10 +574,131 @@
    If you have any questions about this document, or how to work with
    SCIM, send an email to [[mailto:developers@okta.com][developers@okta.com]].
 
-* The Python/Flask sample application, in detail		   :noexport:
-* Files 							   :noexport:
-** scim-server.py
-   #+BEGIN_SRC python :tangle scim-server.py :noweb yes :exports none :padline no
+* An example SCIM server					   :noexport:
+  Included in this git repository is an example SCIM server written in
+  Python. 
+
+  This example SCIM server demonstrates how to implement a basic SCIM
+  server that can create, read, update, and deactivate Okta users.
+
+** How to run
+   Here is how to run the example code on your machine:
+
+   First, start by doing a =git checkout= of this repository, then
+   =cd= to directory that =git= creates. Then, do the following:
+
+   1. Create an isolated Python environment named "venv" using [[http://docs.python-guide.org/en/latest/dev/virtualenvs/][virtualenv]]:
+      #+BEGIN_EXAMPLE
+      $ virtualenv venv
+      #+END_EXAMPLE
+   2. Next, activate the newly created virtualenv:
+      #+BEGIN_EXAMPLE
+      $ source venv/bin/activate
+      #+END_EXAMPLE
+   3. Then, install the dependencies for the sample SCIM server using
+      Python's [[https://en.wikipedia.org/wiki/Pip_%28package_manager%29]["pip" package manager]]:
+      #+BEGIN_EXAMPLE
+      $ pip install -r requirements.txt 
+      #+END_EXAMPLE
+   4. Finally, start the example SCIM server using this command:
+      #+BEGIN_EXAMPLE
+      $ python scim-server.py
+      #+END_EXAMPLE
+
+
+** Dependencies
+   Here are the dependencies that this example SCIM server depends on:
+
+   #+tblname: requirements-table
+   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
+   | name             | equality | version | description                                                            | url                                                      |
+   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
+   | Flask            | >=       |  0.10.1 | A web framework built with a small core and easy-to-extend philosophy. | http://flask.pocoo.org/                                  |
+   | Flask-SQLAlchemy | >=       |     2.1 | Adds SQLAlchemy support to Flask.                                      | https://github.com/mitsuhiko/flask-sqlalchemy            |
+   | Flask-SocketIO   | >=       |     2.1 | Socket.IO integration for Flask applications.                          | https://github.com/miguelgrinberg/Flask-SocketIO         |
+   | gunicorn         | >=       |  19.4.5 | A pre-fork worker model HTTP server for WSGI.                          | https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29 |
+   | Jinja2           | >=       |     2.8 | A modern and designer-friendly templating language.                    | http://jinja.pocoo.org/docs/dev/                         |
+   | MarkupSafe       | >=       |    0.23 | A library for Python that implements a unicode string.                 | http://www.pocoo.org/projects/markupsafe/                |
+   | SQLAlchemy       | >=       |  1.0.12 | SQL toolkit and Object Relational Mapper.                              | https://pypi.python.org/pypi/SQLAlchemy                  |
+   | Werkzeug         | >=       |  0.11.4 | A WSGI utility library for Python.                                     | http://werkzeug.pocoo.org/                               |
+   | itsdangerous     | >=       |    0.24 | Used to send data to untrusted environments.                           | http://pythonhosted.org/itsdangerous/                    |
+   | python-engineio  | >=       |   0.8.8 | Implementation of the Engine.IO realtime server.                       | https://github.com/miguelgrinberg/python-engineio        |
+   | python-socketio  | >=       |     1.0 | Implementation of the Socket.IO realtime server.                       | https://github.com/miguelgrinberg/python-socketio        |
+   | six              | >=       |  1.10.0 | Python 2 and 3 compatibility library.                                  | https://pypi.python.org/pypi/six                         |
+   | wsgiref          | >=       |   0.1.2 | Provides validation support for WSGI.                                  | https://pypi.python.org/pypi/wsgiref                     |
+   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
+   
+*** How to turn the table above into a requirements.txt file	   :noexport:
+    To turn the table above into a =requirements.txt= file, we need to
+    do the following:
+    1. Convert the table into an array of dictionaries.
+    2. Iterate through the array of dictionaries and construct output in
+       the =requirements.txt= format, the output must be annotated so
+       that it is written to =requirements.txt= when =M-x
+       org-bable-tangle= is run on this file.
+*** Converting the table to an array of dictionaries 		   :noexport:
+   The code below is taken verbatim from [[http://stackoverflow.com/a/8414248/3191847][a StackOverflow answer]] by [[http://stackoverflow.com/users/174728/john-la-rooy][John
+   La Rooy]]. This code takes the table above as an array of arrays and
+   returns an array of dictionaries, where the key is the column name
+   and the value is the column content. This array of dictionaries is
+   used below to generate the =requirements.txt= file.
+   #+NAME: table-to-dict
+   #+BEGIN_SRC python :var table=requirements-table :results code
+     headers = table[0]
+     values = table[1:]
+
+     from functools import partial
+     from itertools import izip, imap
+     data = map(dict, imap(partial(izip, headers), values))
+
+     return data
+   #+END_SRC
+   #+RESULTS: table-to-dict
+   #+BEGIN_SRC python
+   [{'version': '0.10.1', 'equality': '>=', 'name': 'Flask', 'description': '[[http://flask.pocoo.org/][A web framework built with a small core and easy-to-extend philosophy.]]'}, {'version': 2.1, 'equality': '>=', 'name': 'Flask-SQLAlchemy', 'description': '[[https://github.com/mitsuhiko/flask-sqlalchemy][Adds SQLAlchemy support to Flask.]]'}, {'version': 2.1, 'equality': '>=', 'name': 'Flask-SocketIO', 'description': '[[http://socket.io/][Socket.IO]] integration [[https://github.com/miguelgrinberg/Flask-SocketIO][for Flask applications.]]'}, {'version': '19.4.5', 'equality': '>=', 'name': 'gunicorn', 'description': '[[https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29][A pre-fork worker model HTTP server]] for [[https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface][WSGI.]]'}, {'version': 2.8, 'equality': '>=', 'name': 'Jinja2', 'description': '[[http://jinja.pocoo.org/docs/dev/][A modern and designer-friendly templating language.]]'}, {'version': 0.23, 'equality': '>=', 'name': 'MarkupSafe', 'description': '[[http://www.pocoo.org/projects/markupsafe/][A library for Python that implements a unicode string.]]'}, {'version': '1.0.12', 'equality': '>=', 'name': 'SQLAlchemy', 'description': '[[https://pypi.python.org/pypi/SQLAlchemy][SQL toolkit and Object Relational Mapper.]]'}, {'version': '0.11.4', 'equality': '>=', 'name': 'Werkzeug', 'description': '[[http://werkzeug.pocoo.org/][A WSGI utility library for Python.]]'}, {'version': 0.24, 'equality': '>=', 'name': 'itsdangerous', 'description': '[[http://pythonhosted.org/itsdangerous/][Used to send data to untrusted environments.]]'}, {'version': '0.8.8', 'equality': '>=', 'name': 'python-engineio', 'description': '[[https://github.com/miguelgrinberg/python-engineio][Implementation of the Engine.IO realtime server.]]'}, {'version': 1.0, 'equality': '>=', 'name': 'python-socketio', 'description': '[[https://github.com/miguelgrinberg/python-socketio][Implementation of the Socket.IO realtime server.]]'}, {'version': '1.10.0', 'equality': '>=', 'name': 'six', 'description': '[[https://pypi.python.org/pypi/six][Python 2 and 3 compatibility library.]]'}, {'version': '0.1.2', 'equality': '>=', 'name': 'wsgiref', 'description': '[[https://pypi.python.org/pypi/wsgiref][Provides validation support for WSGI.]]'}]
+   #+END_SRC
+*** Creating the =requirements.txt= file			   :noexport:
+   This code takes the requirements table above and turns it into a
+   =requirements.txt= file that will get exported when =M-x
+   org-bable-tangle= is run.
+
+   #+HEADER: :results_switches ":tangle requirements.txt :noweb yes :exports none :padline no"
+   #+BEGIN_SRC python :var table=requirements-table :results code :noweb yes
+     data = <<table-to-dict(requirements-table)>>
+     output = ''
+     for package in data:
+	 output += "{name}{equality}{version}\n".format(**package)
+     return output
+   #+END_SRC
+
+   #+RESULTS:
+   #+BEGIN_SRC python :tangle requirements.txt :noweb yes :exports none :padline no
+   Flask>=0.10.1
+   Flask-SQLAlchemy>=2.1
+   Flask-SocketIO>=2.1
+   gunicorn>=19.4.5
+   Jinja2>=2.8
+   MarkupSafe>=0.23
+   SQLAlchemy>=1.0.12
+   Werkzeug>=0.11.4
+   itsdangerous>=0.24
+   python-engineio>=0.8.8
+   python-socketio>=1.0
+   six>=1.10.0
+   wsgiref>=0.1.2
+   #+END_SRC
+
+** How the example server works
+   Below are instructions for writing a SCIM server in Python, using
+   Flask and SQLAlchemy.
+
+   A completed version of this example server is available in this git
+   repository in the file named =scim-server.py=.
+
+   We start by importing the Python packages that the SCIM server will
+   use:
+   #+NAME: imports
+   #+BEGIN_SRC python
      import re
 
      from flask import Flask
@@ -588,13 +709,19 @@
      from flask_socketio import emit
      from flask_sqlalchemy import SQLAlchemy
      import flask
+   #+END_SRC
 
-
+   Next we initialize Flask, SQLAlchemy, and SocketIO:
+   #+NAME: setup
+   #+BEGIN_SRC python
      app = Flask(__name__)
      app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
      db = SQLAlchemy(app)
      socketio = SocketIO(app)
+   #+END_SRC
 
+   #+NAME: list-response-class
+   #+BEGIN_SRC python
      class ListResponse():
          def __init__(self, list, start_index=1, count=None, total_results=0):
              self.list = list
@@ -616,8 +743,10 @@
                  rv['itemsPerPage'] = self.count
              rv['Resources'] = resources
              return rv
+   #+END_SRC
 
-
+   #+NAME: user-db-model
+   #+BEGIN_SRC python
      class User(db.Model):
          __tablename__ = 'users'
          id = db.Column(db.Integer, primary_key=True)
@@ -660,8 +789,10 @@
                  }
              }
              return rv
-
-
+   #+END_SRC
+   
+   #+NAME: scim-error
+   #+BEGIN_SRC python
      def scim_error(message, error_code):
          rv = {
              "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
@@ -669,8 +800,10 @@
              "status": str(error_code)
          }
          return flask.jsonify(rv), error_code
+   #+END_SRC
 
-
+   #+NAME: socket-io-support
+   #+BEGIN_SRC python
      def send_to_browser(obj):
          socketio.emit('user',
                        {'data': obj},
@@ -693,11 +826,43 @@
      @socketio.on('disconnect', namespace='/test')
      def test_disconnect():
          print('Client disconnected')
-
-
+   #+END_SRC
+   
+   #+NAME: hello-route
+   #+BEGIN_SRC python
      @app.route('/')
      def hello():
          return render_template('base.html')
+   #+END_SRC
+   
+   #+NAME: run-from-command-line
+   #+BEGIN_SRC python
+     if __name__ == "__main__":
+         app.debug = True
+         socketio.run(app)
+   #+END_SRC
+   
+* Files 							   :noexport:
+** scim-server.py
+   #+BEGIN_SRC python :tangle scim-server.py :noweb yes :exports none :padline no
+     <<imports>>
+
+
+     <<setup>>
+
+     <<list-response-class>>
+
+
+     <<user-db-model>>
+
+
+     <<scim-error>>
+
+
+     <<socket-io-support>>
+
+
+     <<hello-route>>
 
 
      <<user_get>>
@@ -714,9 +879,125 @@
 
      <<users_get>>
 
-     if __name__ == "__main__":
-         app.debug = True
-         socketio.run(app)
+     <<run-from-command-line>>
    #+END_SRC
-* To do								   :noexport:
+** templates/base.html
+   #+BEGIN_SRC html :tangle templates/base.html :noweb yes :exports none :padline no
+     <!DOCTYPE html>
+     <html lang="en">
+       <head>
+         <meta charset="utf-8">
+         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+         <meta name="viewport" content="width=device-width, initial-scale=1">
+         <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+         <title>Okta SCIM Example</title>
+         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+         <!-- Bootstrap core CSS -->
+         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+         <!--[if lt IE 9]>
+           <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+           <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+           <![endif]-->
+         <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha256-k2/8zcNbxVIh5mnQ52A0r3a6jAgMGxFJFE2707UxGCk= sha512-ZV9KawG2Legkwp3nAlxLIVFudTauWuBpC10uEafMHYL0Sarrz5A7G79kXh5+5+woxQ5HM559XX2UZjMJ36Wplg==" crossorigin="anonymous">
+         <link rel="stylesheet" href="https://lipis.github.io/bootstrap-social/bootstrap-social.css">
+         <!-- 60px to make the container go all the way to the bottom of the topbar -->
+         <style>
+           body { padding-top: 80px; }
+           #okta-sign-in { margin-top: 0px; }
+         </style>
+       </head>
+       <body id="main">
+         <nav class="navbar navbar-inverse navbar-fixed-top">
+           <div class="container">
+             <div class="navbar-header">
+               <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                 <span class="sr-only">Toggle navigation</span>
+                 <span class="icon-bar"></span>
+                 <span class="icon-bar"></span>
+                 <span class="icon-bar"></span>
+               </button>
+               <a class="navbar-brand" href="#">Okta SCIM Example</a>
+             </div>
+             <div id="navbar" class="collapse navbar-collapse">
+               <ul class="nav navbar-nav">
+               </ul>
+             </div><!--/.nav-collapse -->
+           </div>
+         </nav>
+         <div class="container">
+           <table class="table" id="users-table">
+             <caption>SCIM Users</caption>
+             <thead>
+               <tr>
+                 <td>#</td>
+                 <td>First Name</td>
+                 <td>Last Name</td>
+                 <td>Username</td>
+               </tr>
+             </thead>
+           </table>
+           <div id="log">
+           </div>
+         </div><!-- /.container -->
+         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+         <script type="text/javascript">
+           $(document).ready(function () {
+           namespace = '/test'; // change to an empty string to use the global namespace
+           var uri = 'https://' + document.domain  + namespace;
+           console.log(uri);
+           var socket = io.connect(uri);
+           
+           socket.on('user', function(msg) {
+           console.log(msg);
+           var user = msg.data;
+           var user_element = '#' + user.id
+           var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+           if($(user_element).length && user.active) {
+           $(user_element).replaceWith(userRow);
+           } else if (user.active) {
+           $('#users-table').append(userRow);
+           }
+           
+           if($(user_element).length && user.active) {
+           $(user_element).show();
+           }
+           if($(user_element).length && !user.active) {
+           $(user_element).hide();
+           }
+           });
+               
+           });
+         </script>
+         <!-- Placed at the end of the document so the pages load faster -->
+         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+       </body>
+     </html>
+   #+END_SRC
+** .gitignore
+   #+BEGIN_SRC text :tangle .gitignore :noweb yes :exports none :padline no
+     venv
+     ,*.pyc
+     ,*~
+     .DS_Store
+     .exports
+   #+END_SRC
+** LICENSE.txt
+* License information						   :noexport:
+  #+BEGIN_SRC text :tangle LICENSE.txt :padline no
+    Copyright © 2016, Okta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+  #+END_SRC
+* To do 							   :noexport:
 ** TODO Convert example curl output to test fixtures
