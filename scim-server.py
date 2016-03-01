@@ -15,7 +15,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
-
 class ListResponse():
     def __init__(self, list, start_index=1, count=None, total_results=0):
         self.list = list
@@ -107,9 +106,7 @@ def render_json(obj):
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
-    for user in User.query.all():
-        if not user.active:
-            continue
+    for user in User.query.filter_by(active=True).all():
         emit('user', {'data': user.to_scim_resource()})
 
 
@@ -141,7 +138,6 @@ def users_post():
     resp.headers['Location'] = url_for('user_get',
                                        user_id=user.userName,
                                        _external=True)
-    # https://tools.ietf.org/html/rfc7644#section-3.3
     return resp, 201
 
 
@@ -179,8 +175,8 @@ def users_patch(user_id):
 
 @app.route("/scim/v2/Users", methods=['GET'])
 def users_get():
-    request_filter = request.args.get('filter')
     query = User.query
+    request_filter = request.args.get('filter')
     match = None
     if request_filter:
         match = re.match('(\w+) eq "([^"]*)"', request_filter)
@@ -192,10 +188,8 @@ def users_get():
     start_index = int(request.args.get('startIndex', 1))
     if start_index < 1:
         start_index = 1
-    # SCIM is '1' indexed, but SQL is '0' indexed
     start_index -= 1
     query = query.offset(start_index).limit(count)
-    # print(str(query.statement))
     total_results = query.count()
     found = query.all()
     rv = ListResponse(found,

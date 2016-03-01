@@ -466,30 +466,88 @@ Okta does not currently make SCIM requests with the `/Me` URI alias.
 
 # Submitting to Okta
 
-(FIXME: Fill this section out)
+Once you have SCIM provisioning working in your Okta application,
+the last thing you will need to do before submitting your
+application to Okta will be do the following:
 
-## Clean up your attributes
+1.  Check the Profile Attributes for your application
+2.  Check the Attribute Mappings for your application
 
--   Fix "Display name"
--   Update "Description"
--   Delete if not needed
--   Request anything else to be changed:
-    -   External name
-    -   External namespace
-    -   Data type
-    -   Attribute required
-    -   Scope
+## Check the Profile Attributes for your application
 
-Two types of "required":
+Before submitting your application to Okta, you should check the
+User Attributes to make sure that the attributes are set to what
+you would want your users to see.
 
-1.  Needed for the integration to work
-2.  The Okta Admin has to populate a value for it
+Check your Profile Attributes as follows:
 
-Profile Editor > Delete
+-   From the "Admin" section in Okta, open the settings page for your
+    application.
+-   In the "Provisioning" tab, scroll to the bottom and click the
+    "Edit Attributes" button in the "User Attributes" section.
+-   A "Profile Editor" screen will open, check the following settings:
+    -   The "Display name" for the application
+    -   The "Description"
+    -   In the "Attributes" section, remove all attributes that are not
+        supported by your application.
+        
+        This is an important step! Your users will get confused if your
+        application appears to support attributes that are not
+        supported by your SCIM API.
+        
+        You can delete an attribute by selecting an attribute, then
+        clicking the "Delete" button located in right hand attribute details pane.
+    -   After you've removed all unsupported attributes from the
+        "Attributes" section, check through the remaining
+        attributes. In particular, check that the following properties
+        for each attribute are what you expect them to be:
+        -   Display name
+        -   Variable name
+        -   External name
+        -   External namespace
+        -   Data type
+        -   Attribute required
+            Only mark an attribute as required if one of the following is
+            true:
+            1.  The attribute **must** be set for your provisioning
+                integration to work.
+            2.  An Okta administrator will need to populate a value for
+                this attribute.
+        -   Scope
+    -   If the settings for any of your supported user attributes are
+        incorrect, contact Okta and request the correction for your
+        attribute.
+    
+    Click the blue "Back to profiles" link when you are done checking
+    the Profile Attributes for your application.
 
-## Check through Attribute Mappings
+## Check the Attribute Mappings for your application
 
--   Check if correct, change if not
--   Check both:
-    1.  App to Okta
-    2.  Okta to App
+The last step for you to complete before submitting your
+application to Okta is to check the User Profile Mappings for your
+application. These mappings are what determine how profile
+attributes are mapped to and from your application to an Okta
+user's Universal Directory profile.
+
+To check the User Profile Mappings for your application, do the
+following:
+
+-   From the "Admin" section in Okta, open the settings page for your
+    application.
+-   In the "Provisioning" tab, scroll to the bottom and click the
+    "Edit Mappings" button in the "Attribute Mappings" section.
+-   Check that each mapping is what you would expect it to be. Be
+    sure to check both of the followign:
+    1.  From your application to Okta.
+    2.  From Okta to your application.
+
+## Contact Okta
+
+Once you've finished verifying that your SCIM API works with Okta,
+checked all of User Attributes, and checked Attribute Mappings,
+then it is time to submit your application to Okta.
+
+Work with your contact at Okta to start your submission.
+
+If you have any questions about this document, or how to work with
+SCIM, send an email to [developers@okta.com](developers@okta.com).
