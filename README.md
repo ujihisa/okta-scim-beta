@@ -15,7 +15,7 @@ using the open SCIM standard.
 
 # Getting into the Okta SCIM Beta
 
-To request access to the Okta SCIM beta, send an email [oan@okta.com](oan@okta.com)
+To request access to the Okta SCIM beta, send an email [developers@okta.com](developers@okta.com)
 with the following information:
 
 1.  The `oktapreview.com` Okta org that you will use to develop your
@@ -512,6 +512,67 @@ covered in
 [section 3.11](https://tools.ietf.org/html/rfc7644#section-3.11) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 Okta does not currently make SCIM requests with the `/Me` URI alias.
+
+### /Groups API endpoint
+
+Okta does not yet support using the `/Groups` endpoint of a SCIM
+API. When support is added for the `/Groups` endpoint, Okta plans
+on using the following HTTP requests against the `/Groups` endpoint:
+
+-   Read list of Groups: GET /Groups
+
+-   Create Group: POST /Groups
+
+-   Read Group detail: GET /Groups/{id}
+
+-   Delete Group: DELETE /Groups/{id}
+
+### /Schemas API endpoint
+
+Okta does not currently make queries against the `/Schemas`
+endpoint, but has plans to do so soon.
+
+Here is the specification for the `/Schemas` endpoint, from
+[section 4](https://tools.ietf.org/html/rfc7644#section-4) of [RFC 7644](https://tools.ietf.org/html/rfc7644):
+
+> An HTTP GET to this endpoint is used to retrieve information about
+> resource schemas supported by a SCIM service provider.  An HTTP
+> GET to the endpoint "/Schemas" SHALL return all supported schemas
+> in ListResponse format (see Figure 3).  Individual schema
+> definitions can be returned by appending the schema URI to the
+> /Schemas endpoint.  For example:
+> 
+> /Schemas/urn:ietf:params:scim:schemas:core:2.0:User
+> 
+> The contents of each schema returned are described in Section 7 of
+> RFC7643.  An example representation of SCIM schemas may be found
+> in Section 8.7 of RFC7643.
+
+### /ServiceProviderConfig API endpoint
+
+Okta does not currently make queries against the `/ServiceProviderConfig`
+endpoint, but has plans to do so soon.
+
+Here is the specification for the `/ServiceProviderConfig` endpoint, from
+[section 4](https://tools.ietf.org/html/rfc7644#section-4) of [RFC 7644](https://tools.ietf.org/html/rfc7644):
+
+> An HTTP GET to this endpoint will return a JSON structure that
+> describes the SCIM specification features available on a service
+> provider.  This endpoint SHALL return responses with a JSON object
+> using a "schemas" attribute of
+> "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig".
+> The attributes returned in the JSON object are defined in
+> Section 5 of RFC7643.  An example representation of SCIM service
+> provider configuration may be found in Section 8.5 of RFC7643.
+
+### Filtering on `metadata.lastModified`
+
+Okta will not currently make queries for resources using
+`lastModified` as part of a filter expression.
+
+Okta plans on adding functionality to fetch incremental updates
+from SCIM APIs by querying for resources using a filter expression
+that requests resources which were updated since the last update.
 
 # Submitting to Okta
 
