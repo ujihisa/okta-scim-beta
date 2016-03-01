@@ -25,7 +25,7 @@ with the following information:
 3.  The Authentication method that Okta will use to authenticate with
     your service.
 
-Details on the Base URL (See section ) and Authentication (See section ) method are covered below.
+Details on the Base URL and Authentication method are covered below.
 
 Upon approval into the Okta SCIM beta, your `oktapreview.com` Okta
 org will be enabled for the SCIM beta and a template SCIM
