@@ -2,11 +2,12 @@
 
 Thank you for your interest in the Okta SCIM beta.
 
+If you haven't heard of SCIM before, here is a good summary from the
+[Wikipedia article on SCIM](https://en.wikipedia.org/wiki/System_for_Cross-domain_Identity_Management):
+
 > System for Cross-domain Identity Management (SCIM) is an open
 > standard for automating the exchange of user identity information
 > between identity domains, or IT systems.
-
-(From the [Wikipedia article on SCIM](https://en.wikipedia.org/wiki/System_for_Cross-domain_Identity_Management))
 
 If you are a developer for a cloud application, Okta will allow you
 to receive user provisioning and profile update message from Okta
