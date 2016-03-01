@@ -15,6 +15,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
 db = SQLAlchemy(app)
 socketio = SocketIO(app)
 
+
 class ListResponse():
     def __init__(self, list, start_index=1, count=None, total_results=0):
         self.list = list
@@ -41,9 +42,11 @@ class ListResponse():
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    externalId = db.Column(db.String(250))
-    userName = db.Column(db.String(250), unique=True, nullable=False)
     active = db.Column(db.Boolean, default=False)
+    userName = db.Column(db.String(250),
+                         unique=True,
+                         nullable=False,
+                         index=True)
     familyName = db.Column(db.String(250))
     middleName = db.Column(db.String(250))
     givenName = db.Column(db.String(250))
