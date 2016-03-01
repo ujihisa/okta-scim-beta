@@ -286,8 +286,15 @@ of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 ## Update Account Details: PUT /Users/{id}
 
-When the profile a user assigned to your SCIM enabled application
-is changed, Okta will make a PUT to `/Users/{id}` in your application.
+When a profile attribute of a user assigned to your SCIM enabled
+application is changed, Okta will do the following:
+
+-   Make a GET request against `/Users/{id}` on your SCIM API for the
+    user to be updated.
+-   Take the resource returned from your SCIM API and update only the
+    attributes that need to be updated.
+-   Make a PUT request against `/Users/{id}` in your SCIM API with
+    the updated resource as the payload.
 
 Examples of things that can cause changes to an Okta user profile
 are:
