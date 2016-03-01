@@ -131,21 +131,6 @@ support to work with Okta.
 
 ## Create Account: POST /Users
 
-(FIXME: Fix this up to flow better with the text below)
-**Account Creation in your app**
-
--   When a user is in an active state in Okta, you can associate an
-    application with a user in multiple ways
-    -   Direct assignment where you associate the app with the user
-        directly
-        -   If there are entitlements, they have to be manually assigned
-            through the UI.
-    -   Group-based assignment – where an app is associated with a group
-        – and the user becomes a member of a group 
-        -   If there are entitlements, at the time when the app is
-            associated with the group, the admin picks the right set of
-            entitlements that are applicable to users in this group.
-
 Your SCIM 2.0 API should allow the creation of a new user
 account.  The four basic attributes listed above must be supported, along
 with any additional attributes that your application supports.  If your
@@ -155,10 +140,23 @@ configuration of those as well.
 An HTTP POST to the `/Users` endpoint must return an immutable or 
 system ID of the user (`id`) must be returned to Okta.
 
+Okta will call this SCIM API endpoint under the following circumstances:
+
+-   **Direct assignment**
+    
+    When a user is assigned to an Okta application using the "Assign
+    to People" button in the "People" tab.
+-   **Group-based assignment**
+    
+    When a user is added to a group that is assigned to an Okta
+    application. For example, an Okta administrator can assign a
+    group of users to an Okta application using the "Assign to
+    Groups" button in the "Groups" tab. One a group is assigned to an
+    Okta application, Okta will send updates to the assigned
+    application when a user is added or removed from that group.
+
 Below is an example demonstrating how one might to handle account
 creation in Python/Flask:
-
-<https://tools.ietf.org/html/rfc7644#section-3.3>
 
     @app.route("/scim/v2/Users", methods=['POST'])
     def users_post():
@@ -173,6 +171,9 @@ creation in Python/Flask:
                                            user_id=user.userName,
                                            _external=True)
         return resp, 201
+
+For more information on user creation via the `/Users` SCIM
+endpoint, see [section 3.3](https://tools.ietf.org/html/rfc7644#section-3.3) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 ## Read list of accounts with search: GET /Users
 
@@ -214,60 +215,72 @@ list of users, with support for filtering and pagination:
 > the query, add this code after the `query` statement that you'd
 > like to see: `print(str(query.statement))`
 
-For more details on the `/Users` SCIM endpoint, see [section 3.4.1](https://tools.ietf.org/html/rfc7644#section-3.4.1)
+For more details on the `/Users` SCIM endpoint, see [section 3.4.2](https://tools.ietf.org/html/rfc7644#section-3.4.2)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 ## Read Account Details: GET /Users/{id}
+
+Your SCIM 2.0 API must support fetching of users by user id.
+
+Below is an example written in Python/Flask that will return a user
+by user id:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['GET'])
     def user_get(user_id):
         user = User.query.filter_by(id=user_id).one()
         return render_json(user)
 
+For more details on the `/Users/{id}` SCIM endpoint, see [section 3.4.1](https://tools.ietf.org/html/rfc7644#section-3.4.1)
+of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
+
 ## Update Account Details: PUT /Users/{id}
 
-Okta will make a PUT to `/Users/{id}` when one of the following
-things happen:
+When the profile a user assigned to your SCIM enabled application
+is changed, Okta will make a PUT to `/Users/{id}` in your application.
 
--   There is an update when Okta detects a profile change of a user.
-    -   From a master like Active Directory or a Human Resource
-        Management Software system.
-    -   From a direct change of a profile attribute in Okta for a local
-        user.
--   All applications assigned to an Okta account user with provisioning support are
-    evaluated and where appropriate, updates are made against the
-    target applications.
-    
-        @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
-        def users_put(user_id):
-            user_resource = request.get_json()
-            user = User.query.filter_by(id=user_id).one()
-            user.update(user_resource)
-            db.session.add(user)
-            db.session.commit()
-            return render_json(user)
+Examples of things that can cause changes to an Okta user profile
+are:
+
+-   A change in profile a master like Active Directory or a Human Resource
+    Management Software system.
+-   A direct change of a profile attribute in Okta for a local user.
+
+Below is an example written in Python/Flask that demonstrates how
+to handle account profile updates:
+
+    @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
+    def users_put(user_id):
+        user_resource = request.get_json()
+        user = User.query.filter_by(id=user_id).one()
+        user.update(user_resource)
+        db.session.add(user)
+        db.session.commit()
+        return render_json(user)
+
+For more details on updates to the `/Users/{id}` SCIM endpoint, see [section 3.5.1](https://tools.ietf.org/html/rfc7644#section-3.5.1)
+of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 ## Deactivate Account: PATCH /Users/{id}
 
-Deprovisioning is perhaps one of the most important
-reason customers want your application to support provisioning
-with Okta. Your SCIM API should support account deactivation via
-a PATCH to `/Users/{id}` where the payload of the PATCH request
-will set the `active` property of the user to `false`.
-
-Okta will deactivated when your application is "unassigned" from
-the user in one of the following ways:
-
--   Unassigning the app manually if user was originally assigned the
-    app manually.
--   If user was originally assigned the app as a member of a group
-    where the app is associated, remove the user from the group
--   When a user is deactivated in Okta, either manually or triggered
-    by an external master such as AD or HR.
+Deprovisioning is perhaps the most important reason customers why
+customers will ask for your application to support provisioning
+with Okta. Your SCIM API should support account deactivation via a
+PATCH to `/Users/{id}` where the payload of the PATCH request will
+set the `active` property of the user to `false`.
 
 Your SCIM API should allow account updates at the attribute level.
 If entitlements are supported, your SCIM API should also be able
 to update entitlements based on SCIM profile updates.
+
+Okta will send a PATCH request to your application to deactivate a
+user when an Okta user is "unassigned" from your
+application. Examples of when this happen are as follow:
+
+-   A user is manually unassigned from your application.
+-   A user is removed from a group which is assigned to your application.
+-   When a user is deactivated in Okta, either manually or via 
+    by an external profile master like Active Directory or a Human
+    Resource Management Software system.
 
 Below is how the example Python/Flask SCIM server handles account deactivation:
 
@@ -292,18 +305,18 @@ Below is how the example Python/Flask SCIM server handles account deactivation:
         db.session.commit()
         return render_json(user)
 
-## Filtering on `id`, `externalId`, `userName`, and `emails`
+For more details on user attribute updates to `/Users/{id}` SCIM endpoint, see [section 3.5.2](https://tools.ietf.org/html/rfc7644#section-3.5.2)
+of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
-Filtering on Resources for Query (Must be able to filter on
-attributes `id`, `externalId`, `userName` and `emails`) 
+## Filtering on `id`, `externalId`, `userName`, and `emails`
 
 Being able to filter results by the `id`, `externalId`, or `userName`
 attributes is a critical part of working with Okta. 
 
 Your SCIM API must be able to filter users by `userName` and should
-support filtering by `id` and `externalId`. Filtering support is
-required because most provisioning actions require the ability to
-determine if a user record exists on your system.
+also support filtering by `id` and `externalId`. Filtering support
+is required because most provisioning actions require the ability
+for Okta to determine if a user record exists on your system.
 
 Consider the scenario where an Okta customer with thousands of
 users has a provisioning integration with your system, which also
@@ -312,9 +325,16 @@ their Okta organization, Okta needs a way to determine quickly if a
 record for the newly created user was previously created on your
 system.
 
-(FIXME: Give examples of filters below)
-`userName eq jane@example.com`
-`emails eq jane@example.com`
+Examples of filters that Okta might send to your SCIM API are as
+follows:
+
+> userName eq "jane@example.com"
+
+> emails eq "jane@example.com"
+
+Note that, at the moment, Okta will only `eq` filter operator. However, the
+[filtering capabilities](https://tools.ietf.org/html/rfc7644#section-3.4.2.2) described in the SCIM 2.0 Protocol Specification are
+much more complicated.
 
 Here is an example of how you might implement SCIM filtering in Python:
 
@@ -327,10 +347,17 @@ Here is an example of how you might implement SCIM filtering in Python:
         search_key = getattr(User, search_key_name)
         query = query.filter(search_key == search_value)
 
+Note: The sample code above only supports the `eq` operator. We
+recommend that you add support for all of the filter operators
+described in [table 3](https://tools.ietf.org/html/rfc7644#page-18) of the SCIM 2.0 Protocol Specification.
+
+For more details on filtering in SCIM 2.0, see [section 3.4.2.2](https://tools.ietf.org/html/rfc7644#section-3.4.2.2)
+of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
+
 ## Resource Paging
 
 When returning large lists of resources, your SCIM implementation
-must support pagination using a limit (`count`) and offset
+must support pagination using a *limit* (`count`) and *offset*
 (`startIndex`) to return smaller groups of resources in a request.
 
 Below is an example of a `curl` command that makes a request to the
@@ -379,6 +406,9 @@ If you are wondering why his code subtracts "1" from the
 `startIndex`, it is because because `startIndex` is a [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
 the OFFSET statement is [0-indexed](http://www.postgresql.org/docs/8.0/static/queries-limit.html).
 
+For more details pagination on a SCIM 2.0 endpoint, see [section 3.4.2.4](https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
+of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
+
 ## Rate Limiting
 
 Some customer actions, such as adding hundreds of users at once,
@@ -387,6 +417,9 @@ scenarios like this, we suggest that your SCIM API return rate
 limiting information to Okta via the [HTTP 429 Too Many Requests](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#429)
 status code. This will help Okta throttle the rate at which SCIM
 requests are made to your API.
+
+For more details on rate limiting requests using the HTTP 429
+status code, see [section 4](https://tools.ietf.org/html/rfc6585#section-4) of [RFC 6585](https://tools.ietf.org/html/rfc6585).
 
 ## SCIM Features not implemented by Okta
 
