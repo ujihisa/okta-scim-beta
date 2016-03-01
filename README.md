@@ -104,8 +104,8 @@ Your service must be capable of storing the following four user
 attributes:
 
 1.  User ID (`userName`)
-2.  First Name (`givenName`)
-3.  Last Name (`familyName`)
+2.  First Name (`name.givenName`)
+3.  Last Name (`name.familyName`)
 4.  Email (`emails`)
 
 Note that Okta supports more than the four user attributes listed
@@ -124,6 +124,56 @@ attributes you will need to add support for those additional
 attributes to your SCIM API. In some cases, you may need to
 configure Okta to map non-standard user attributes into the user
 profile for your application.
+
+Here is how our Python/Flask sample application defines these attributes:
+
+    userName = db.Column(db.String(250),
+                         unique=True,
+                         nullable=False,
+                         index=True)
+    familyName = db.Column(db.String(250))
+    middleName = db.Column(db.String(250))
+    givenName = db.Column(db.String(250))
+
+In addition to the basic user schema user attributes described
+above, your SCIM API must also have a unique identifier for each
+user resource and should also support marking resources as "active"
+or "inactive".
+
+In the SCIM specification, the `id` attribute is used to uniquely
+identify resources. [Section 3.1](//tools.ietf.org/html/rfc7643#section-3.1) of [RFC 7643](https://tools.ietf.org/html/rfc7643) provides more details
+on the `id` attribute:
+
+> A unique identifier for a SCIM resource as defined by the service
+> provider.  Each representation of the resource MUST include a
+> non-empty "id" value.  This identifier MUST be unique across the
+> SCIM service provider's entire set of resources.  It MUST be a
+> stable, non-reassignable identifier that does not change when the
+> same resource is returned in subsequent requests.  The value of
+> the "id" attribute is always issued by the service provider and
+> MUST NOT be specified by the client.  The string "bulkId" is a
+> reserved keyword and MUST NOT be used within any unique identifier
+> value.  The attribute characteristics are "caseExact" as "true", a
+> mutability of "readOnly", and a "returned" characteristic of
+> "always".
+
+Our sample application defines `id` as a monotonically
+increasing integer:
+
+    id = db.Column(db.Integer, primary_key=True)
+
+**Note:** Your SCIM API can use anything as an `id`, provided that the `id`
+uniquely identifies reach resource, as described in [section 3.1](https://tools.ietf.org/html/rfc7643#section-3.1) of
+[RFC 7643](https://tools.ietf.org/html/rfc7643).
+
+Finally, your SCIM API must also support marking a resource as
+"active" or "inactive". 
+
+In our sample application, each user resource has a boolean
+"active" attribute which is used to mark a user resource as
+"active" or "inactive":
+
+    active = db.Column(db.Boolean, default=False)
 
 ## Functionality
 
@@ -156,8 +206,8 @@ Okta will call this SCIM API endpoint under the following circumstances:
     Okta application, Okta will send updates to the assigned
     application when a user is added or removed from that group.
 
-Below is an example demonstrating how one might to handle account
-creation in Python/Flask:
+Below is an example demonstrating how the sample application handles account
+creation:
 
     @app.route("/scim/v2/Users", methods=['POST'])
     def users_post():
@@ -180,12 +230,12 @@ endpoint, see [section 3.3](https://tools.ietf.org/html/rfc7644#section-3.3) of 
 
 Your SCIM 2.0 API must support the ability for Okta to retrieve
 users (and entitlements like groups if available) from your
-service.  This allows Okta to fetch all user records in an
+service.  This allows Okta to fetch all user resources in an
 efficient manner for reconciliation and initial bootstrap (to
 get all users from your app into the system).
 
-Below is an example written in Python/Flask that will return a
-list of users, with support for filtering and pagination:
+Below is how the sample application handles listing user resources,
+with support for filtering and pagination:
 
     @app.route("/scim/v2/Users", methods=['GET'])
     def users_get():
@@ -223,7 +273,7 @@ of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 Your SCIM 2.0 API must support fetching of users by user id.
 
-Below is an example written in Python/Flask that will return a user
+Below is how the sample application handles returning a user resource
 by user id:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['GET'])
@@ -246,8 +296,7 @@ are:
     Management Software system.
 -   A direct change of a profile attribute in Okta for a local user.
 
-Below is an example written in Python/Flask that demonstrates how
-to handle account profile updates:
+Below is how the sample application handles account profile updates:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
     def users_put(user_id):
@@ -283,7 +332,7 @@ application. Examples of when this happen are as follow:
     by an external profile master like Active Directory or a Human
     Resource Management Software system.
 
-Below is how the example Python/Flask SCIM server handles account deactivation:
+Below is how the sample application handles account deactivation:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
     def users_patch(user_id):
@@ -317,13 +366,13 @@ attributes is a critical part of working with Okta.
 Your SCIM API must be able to filter users by `userName` and should
 also support filtering by `id` and `externalId`. Filtering support
 is required because most provisioning actions require the ability
-for Okta to determine if a user record exists on your system.
+for Okta to determine if a user resource exists on your system.
 
 Consider the scenario where an Okta customer with thousands of
 users has a provisioning integration with your system, which also
 has thousands of users. When an Okta customer adds a new user to
 their Okta organization, Okta needs a way to determine quickly if a
-record for the newly created user was previously created on your
+resource for the newly created user was previously created on your
 system.
 
 Examples of filters that Okta might send to your SCIM API are as
@@ -393,8 +442,7 @@ Below is an example of a `curl` command that makes a request to the
       "totalResults": 1
     }
 
-And here is how our sample Python/Flask SCIM server handles
-pagination with SQLAlchemy:
+And here is how our sample application handles pagination with SQLAlchemy:
 
     count = int(request.args.get('count', 100))
     start_index = int(request.args.get('startIndex', 1))
