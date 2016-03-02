@@ -666,7 +666,7 @@ Work with your contact at Okta to start your submission.
 If you have any questions about this document, or how to work with
 SCIM, send an email to [developers@okta.com](developers@okta.com).
 
-# More details on the example SCIM server
+# Appendix: Details on the example SCIM server
 
 Included in this git repository is an example SCIM server written in
 Python. 
@@ -750,9 +750,15 @@ a [SCIM "User" resource schema](https://tools.ietf.org/html/rfc7643#section-4.1)
 
     class User(db.Model):
         __tablename__ = 'users'
-        <<user-db-model-id-attribute>>
-        <<user-db-model-active-attribute>>
-        <<user-db-model-user-attributes>>
+        id = db.Column(db.Integer, primary_key=True)
+        active = db.Column(db.Boolean, default=False)
+        userName = db.Column(db.String(250),
+                             unique=True,
+                             nullable=False,
+                             index=True)
+        familyName = db.Column(db.String(250))
+        middleName = db.Column(db.String(250))
+        givenName = db.Column(db.String(250))
     
         def __init__(self, resource):
             self.update(resource)
@@ -889,30 +895,29 @@ JavaScript is part of, see the `base.html` file in the `templates`
 directory of this project.
 
     $(document).ready(function () {
-    namespace = '/test'; // change to an empty string to use the global namespace
-    var uri = 'https://' + document.domain  + namespace;
-    console.log(uri);
-    var socket = io.connect(uri);
+        namespace = '/test'; // change to an empty string to use the global namespace
+        var uri = 'https://' + document.domain  + namespace;
+        console.log(uri);
+        var socket = io.connect(uri);
     
-    socket.on('user', function(msg) {
-    console.log(msg);
-    var user = msg.data;
-    var user_element = '#' + user.id
-    var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
-    if($(user_element).length && user.active) {
-    $(user_element).replaceWith(userRow);
-    } else if (user.active) {
-    $('#users-table').append(userRow);
-    }
+        socket.on('user', function(msg) {
+            console.log(msg);
+            var user = msg.data;
+            var user_element = '#' + user.id
+            var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+            if($(user_element).length && user.active) {
+                $(user_element).replaceWith(userRow);
+            } else if (user.active) {
+                $('#users-table').append(userRow);
+            }
     
-    if($(user_element).length && user.active) {
-    $(user_element).show();
-    }
-    if($(user_element).length && !user.active) {
-    $(user_element).hide();
-    }
-    });
-    
+            if($(user_element).length && user.active) {
+                $(user_element).show();
+            }
+            if($(user_element).length && !user.active) {
+                $(user_element).hide();
+            }
+        });
     });
 
 ## Support for running from the command line

@@ -678,7 +678,7 @@
    If you have any questions about this document, or how to work with
    SCIM, send an email to [[mailto:developers@okta.com][developers@okta.com]].
 
-* More details on the example SCIM server
+* Appendix: Details on the example SCIM server
   Included in this git repository is an example SCIM server written in
   Python. 
 
@@ -763,7 +763,7 @@
    a [[https://tools.ietf.org/html/rfc7643#section-4.1][SCIM "User" resource schema]].
 
    #+NAME: user-db-model
-   #+BEGIN_SRC python
+   #+BEGIN_SRC python :noweb yes
      class User(db.Model):
          __tablename__ = 'users'
          <<user-db-model-id-attribute>>
