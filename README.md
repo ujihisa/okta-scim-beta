@@ -864,6 +864,8 @@ This page is updated using the functions below:
 -   `test_disconnect` is a stub that shows how to handle Socket.IO
     "disconnect" messages.
 
+The code described above is as follows:
+
     def send_to_browser(obj):
         socketio.emit('user',
                       {'data': obj},
@@ -964,7 +966,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.10.1</td>
 <td class="left">A web framework built with a small core and easy-to-extend philosophy.</td>
-<td class="left"><http://flask.pocoo.org/></td>
+<td class="left">`http://flask.pocoo.org`</td>
 </tr>
 
 
@@ -973,7 +975,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">2.1</td>
 <td class="left">Adds SQLAlchemy support to Flask.</td>
-<td class="left"><https://github.com/mitsuhiko/flask-sqlalchemy></td>
+<td class="left">`https://github.com/mitsuhiko/flask-sqlalchemy`</td>
 </tr>
 
 
@@ -982,7 +984,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">2.1</td>
 <td class="left">Socket.IO integration for Flask applications.</td>
-<td class="left"><https://github.com/miguelgrinberg/Flask-SocketIO></td>
+<td class="left">`https://github.com/miguelgrinberg/Flask-SocketIO`</td>
 </tr>
 
 
@@ -991,7 +993,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">19.4.5</td>
 <td class="left">A pre-fork worker model HTTP server for WSGI.</td>
-<td class="left"><https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29></td>
+<td class="left">`https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29`</td>
 </tr>
 
 
@@ -1000,7 +1002,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">2.8</td>
 <td class="left">A modern and designer-friendly templating language.</td>
-<td class="left"><http://jinja.pocoo.org/docs/dev/></td>
+<td class="left">`http://jinja.pocoo.org/docs/dev`</td>
 </tr>
 
 
@@ -1009,7 +1011,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.23</td>
 <td class="left">A library for Python that implements a unicode string.</td>
-<td class="left"><http://www.pocoo.org/projects/markupsafe/></td>
+<td class="left">`http://www.pocoo.org/projects/markupsafe`</td>
 </tr>
 
 
@@ -1018,7 +1020,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">1.0.12</td>
 <td class="left">SQL toolkit and Object Relational Mapper.</td>
-<td class="left"><https://pypi.python.org/pypi/SQLAlchemy></td>
+<td class="left">`https://pypi.python.org/pypi/SQLAlchemy`</td>
 </tr>
 
 
@@ -1027,7 +1029,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.11.4</td>
 <td class="left">A WSGI utility library for Python.</td>
-<td class="left"><http://werkzeug.pocoo.org/></td>
+<td class="left">`http://werkzeug.pocoo.org`</td>
 </tr>
 
 
@@ -1036,7 +1038,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.24</td>
 <td class="left">Used to send data to untrusted environments.</td>
-<td class="left"><http://pythonhosted.org/itsdangerous/></td>
+<td class="left">`http://pythonhosted.org/itsdangerous`</td>
 </tr>
 
 
@@ -1045,7 +1047,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.8.8</td>
 <td class="left">Implementation of the Engine.IO realtime server.</td>
-<td class="left"><https://github.com/miguelgrinberg/python-engineio></td>
+<td class="left">`https://github.com/miguelgrinberg/python-engineio`</td>
 </tr>
 
 
@@ -1054,7 +1056,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">1.0</td>
 <td class="left">Implementation of the Socket.IO realtime server.</td>
-<td class="left"><https://github.com/miguelgrinberg/python-socketio></td>
+<td class="left">`https://github.com/miguelgrinberg/python-socketio`</td>
 </tr>
 
 
@@ -1063,7 +1065,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">1.10.0</td>
 <td class="left">Python 2 and 3 compatibility library.</td>
-<td class="left"><https://pypi.python.org/pypi/six></td>
+<td class="left">`https://pypi.python.org/pypi/six`</td>
 </tr>
 
 
@@ -1072,7 +1074,7 @@ server depends on, and what each dependency does.
 <td class="left">>=</td>
 <td class="right">0.1.2</td>
 <td class="left">Provides validation support for WSGI.</td>
-<td class="left"><https://pypi.python.org/pypi/wsgiref></td>
+<td class="left">`https://pypi.python.org/pypi/wsgiref`</td>
 </tr>
 </tbody>
 </table>

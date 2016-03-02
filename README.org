@@ -884,6 +884,7 @@
    - =test_disconnect= is a stub that shows how to handle Socket.IO
      "disconnect" messages.
 
+   The code described above is as follows:
    
    #+NAME: socket-io-support
    #+BEGIN_SRC python
@@ -959,23 +960,23 @@
    server depends on, and what each dependency does.
 
    #+tblname: requirements-table
-   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
-   | name             | equality | version | description                                                            | url                                                      |
-   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
-   | Flask            | >=       |  0.10.1 | A web framework built with a small core and easy-to-extend philosophy. | http://flask.pocoo.org/                                  |
-   | Flask-SQLAlchemy | >=       |     2.1 | Adds SQLAlchemy support to Flask.                                      | https://github.com/mitsuhiko/flask-sqlalchemy            |
-   | Flask-SocketIO   | >=       |     2.1 | Socket.IO integration for Flask applications.                          | https://github.com/miguelgrinberg/Flask-SocketIO         |
-   | gunicorn         | >=       |  19.4.5 | A pre-fork worker model HTTP server for WSGI.                          | https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29 |
-   | Jinja2           | >=       |     2.8 | A modern and designer-friendly templating language.                    | http://jinja.pocoo.org/docs/dev/                         |
-   | MarkupSafe       | >=       |    0.23 | A library for Python that implements a unicode string.                 | http://www.pocoo.org/projects/markupsafe/                |
-   | SQLAlchemy       | >=       |  1.0.12 | SQL toolkit and Object Relational Mapper.                              | https://pypi.python.org/pypi/SQLAlchemy                  |
-   | Werkzeug         | >=       |  0.11.4 | A WSGI utility library for Python.                                     | http://werkzeug.pocoo.org/                               |
-   | itsdangerous     | >=       |    0.24 | Used to send data to untrusted environments.                           | http://pythonhosted.org/itsdangerous/                    |
-   | python-engineio  | >=       |   0.8.8 | Implementation of the Engine.IO realtime server.                       | https://github.com/miguelgrinberg/python-engineio        |
-   | python-socketio  | >=       |     1.0 | Implementation of the Socket.IO realtime server.                       | https://github.com/miguelgrinberg/python-socketio        |
-   | six              | >=       |  1.10.0 | Python 2 and 3 compatibility library.                                  | https://pypi.python.org/pypi/six                         |
-   | wsgiref          | >=       |   0.1.2 | Provides validation support for WSGI.                                  | https://pypi.python.org/pypi/wsgiref                     |
-   |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
+   |------------------+----------+---------+------------------------------------------------------------------------+------------------------------------------------------------|
+   | name             | equality | version | description                                                            | url                                                        |
+   |------------------+----------+---------+------------------------------------------------------------------------+------------------------------------------------------------|
+   | Flask            | >=       |  0.10.1 | A web framework built with a small core and easy-to-extend philosophy. | =http://flask.pocoo.org=                                   |
+   | Flask-SQLAlchemy | >=       |     2.1 | Adds SQLAlchemy support to Flask.                                      | =https://github.com/mitsuhiko/flask-sqlalchemy=            |
+   | Flask-SocketIO   | >=       |     2.1 | Socket.IO integration for Flask applications.                          | =https://github.com/miguelgrinberg/Flask-SocketIO=         |
+   | gunicorn         | >=       |  19.4.5 | A pre-fork worker model HTTP server for WSGI.                          | =https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29= |
+   | Jinja2           | >=       |     2.8 | A modern and designer-friendly templating language.                    | =http://jinja.pocoo.org/docs/dev=                          |
+   | MarkupSafe       | >=       |    0.23 | A library for Python that implements a unicode string.                 | =http://www.pocoo.org/projects/markupsafe=                 |
+   | SQLAlchemy       | >=       |  1.0.12 | SQL toolkit and Object Relational Mapper.                              | =https://pypi.python.org/pypi/SQLAlchemy=                  |
+   | Werkzeug         | >=       |  0.11.4 | A WSGI utility library for Python.                                     | =http://werkzeug.pocoo.org=                                |
+   | itsdangerous     | >=       |    0.24 | Used to send data to untrusted environments.                           | =http://pythonhosted.org/itsdangerous=                     |
+   | python-engineio  | >=       |   0.8.8 | Implementation of the Engine.IO realtime server.                       | =https://github.com/miguelgrinberg/python-engineio=        |
+   | python-socketio  | >=       |     1.0 | Implementation of the Socket.IO realtime server.                       | =https://github.com/miguelgrinberg/python-socketio=        |
+   | six              | >=       |  1.10.0 | Python 2 and 3 compatibility library.                                  | =https://pypi.python.org/pypi/six=                         |
+   | wsgiref          | >=       |   0.1.2 | Provides validation support for WSGI.                                  | =https://pypi.python.org/pypi/wsgiref=                     |
+   |------------------+----------+---------+------------------------------------------------------------------------+------------------------------------------------------------|
    
    (This table is used to generate the =requirements.txt= file for this project)
 *** How to turn the table above into a requirements.txt file	   :noexport:
