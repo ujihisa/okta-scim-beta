@@ -13,28 +13,6 @@
 #+OPTIONS: num:nil
 # Turn of subscript parsing: http://super-user.org/wordpress/2012/02/02/how-to-get-rid-of-subscript-annoyance-in-org-mode/comment-page-1/
 #+OPTIONS: ^:{}
-* Introduction							   :noexport:
-  The Okta Application Network is a collection of more than 4000
-  prebuilt application connectors. Integrating with customers'
-  identity infrastructures is a top requirement for cloud Independent
-  Software Vendors (ISVs).
-
-  For an improved and secure login experience, enabling Single Sign-On
-  for your application with protocols like SAML. See [[http://developer.okta.com/docs/guides/saml_guidance.html][Single Sign-On
-  with Okta]] for more information on allowing end users to log into
-  your application using corporate credentials link here.  In the case
-  of an Active Directory deployment, end users can effectively log
-  into your application with their Active Directory credentials.
-
-  Equally important is the ability to provision and deprovision
-  accounts in your application by integrating with your customers'
-  user lifecycles.  Many companies use Active Directory as the trigger
-  for account provisioning.  Some companies use Human Resource
-  Management Systems (HRMS) such as Workday to drive account
-  provisioning. Okta already integrates with those systems.  All you
-  need to do is expose a SCIM API – to allow Okta to perform
-  operations such as account creation, updates, and entitlement
-  assignments (groups or roles) to your application.
 * Welcome to the Okta SCIM Beta
   Thank you for your interest in the Okta SCIM beta.
 
@@ -418,7 +396,19 @@
    emails eq "jane@example.com"
    #+END_QUOTE
    
-   Note that, at the moment, Okta only supports the =eq= filter operator. However, the
+   #+BEGIN_QUOTE
+   externalId eq "00u1abcdefGHIJKLMNOP"
+   #+END_QUOTE
+
+   Note: The sample application included in this project does not yet
+   demonstrate how to implement storing and filtering by
+   =externalId=. However, Okta strongly recommends that your SCIM
+   implementation supports storing and filtering by =externalId=. For
+   details on supporting =externalId=, see
+   [[https://tools.ietf.org/html/rfc7643#section-3.1][section 3.1]] of [[https://tools.ietf.org/html/rfc7643][RFC 7643]].
+   
+   
+   At the moment, Okta only supports the =eq= filter operator. However, the
    [[https://tools.ietf.org/html/rfc7644#section-3.4.2.2][filtering capabilities]] described in the SCIM 2.0 Protocol Specification are
    much more complicated.
 
@@ -1041,11 +1031,28 @@
    six>=1.10.0
    wsgiref>=0.1.2
    #+END_SRC
+* License information
+  #+NAME: license
+  #+BEGIN_SRC text :tangle LICENSE.txt :padline no
+    Copyright © 2016, Okta, Inc.
 
-   
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+  #+END_SRC
+
 * Files 							   :noexport:
 ** scim-server.py
    #+BEGIN_SRC python :tangle scim-server.py :noweb yes :exports none :padline no
+     # <<license>>
      <<imports>>
 
 
@@ -1159,21 +1166,5 @@
      .DS_Store
      .exports
    #+END_SRC
-* License information
-  #+BEGIN_SRC text :tangle LICENSE.txt :padline no
-    Copyright © 2016, Okta, Inc.
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-  #+END_SRC
 * To do 							   :noexport:
 ** TODO Convert example curl output to test fixtures

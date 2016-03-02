@@ -391,7 +391,16 @@ follows:
 
 > emails eq "jane@example.com"
 
-Note that, at the moment, Okta only supports the `eq` filter operator. However, the
+> externalId eq "00u1abcdefGHIJKLMNOP"
+
+Note: The sample application included in this project does not yet
+demonstrate how to implement storing and filtering by
+`externalId`. However, Okta strongly recommends that your SCIM
+implementation supports storing and filtering by `externalId`. For
+details on supporting `externalId`, see
+[section 3.1](https://tools.ietf.org/html/rfc7643#section-3.1) of [RFC 7643](https://tools.ietf.org/html/rfc7643).
+
+At the moment, Okta only supports the `eq` filter operator. However, the
 [filtering capabilities](https://tools.ietf.org/html/rfc7644#section-3.4.2.2) described in the SCIM 2.0 Protocol Specification are
 much more complicated.
 
