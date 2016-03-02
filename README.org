@@ -678,13 +678,16 @@
    If you have any questions about this document, or how to work with
    SCIM, send an email to [[mailto:developers@okta.com][developers@okta.com]].
 
-* An example SCIM server					   :noexport:
+* More details on the example SCIM server
   Included in this git repository is an example SCIM server written in
   Python. 
 
   This example SCIM server demonstrates how to implement a basic SCIM
   server that can create, read, update, and deactivate Okta users.
 
+  The "Required SCIM Capabilities" section has the sample code that
+  handles the HTTP requests to this sample application, below we
+  describe the rest of code used in the example.
 ** How to run
    Here is how to run the example code on your machine:
 
@@ -709,9 +712,252 @@
       $ python scim-server.py
       #+END_EXAMPLE
 
+** Introduction
+   Below are instructions for writing a SCIM server in Python, using
+   Flask and SQLAlchemy.
 
+   A completed version of this example server is available in this git
+   repository in the file named =scim-server.py=.
+
+** Imports
+   We start by importing the Python packages that the SCIM server will
+   use:
+   #+NAME: imports
+   #+BEGIN_SRC python
+     import re
+
+     from flask import Flask
+     from flask import render_template
+     from flask import request
+     from flask import url_for
+     from flask_socketio import SocketIO
+     from flask_socketio import emit
+     from flask_sqlalchemy import SQLAlchemy
+     import flask
+   #+END_SRC
+
+** Setup
+   =re= adds support for regular expression parsing, =flask= adds the Flask
+   web framework, =flask_socketio= and =flask_sqlalchemy= add a idiomatic support for
+   their respective technologies to Flask.
+
+   Next we initialize Flask, SQLAlchemy, and SocketIO:
+   #+NAME: setup
+   #+BEGIN_SRC python
+     app = Flask(__name__)
+     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
+     db = SQLAlchemy(app)
+     socketio = SocketIO(app)
+   #+END_SRC
+
+** SQLAlchemy support for the "users" table:
+
+   Below is the class that SQLAlchemy uses to give us easy access to
+   the "users" table.
+
+   The =update= method is used to "merge" or "update" a new User object
+   into an existing User object. This is used to simplify the code for
+   the code that handles PUT calls to =/Users/{id}=.
+
+   The =to_scim_resource= method is used to turn a User object into
+   a [[https://tools.ietf.org/html/rfc7643#section-4.1][SCIM "User" resource schema]].
+
+   #+NAME: user-db-model
+   #+BEGIN_SRC python
+     class User(db.Model):
+         __tablename__ = 'users'
+         <<user-db-model-id-attribute>>
+         <<user-db-model-active-attribute>>
+         <<user-db-model-user-attributes>>
+
+         def __init__(self, resource):
+             self.update(resource)
+
+         def update(self, resource):
+             for attribute in ['userName', 'active']:
+                 if attribute in resource:
+                     setattr(self, attribute, resource[attribute])
+             for attribute in ['givenName', 'middleName', 'familyName']:
+                 if attribute in resource['name']:
+                     setattr(self, attribute, resource['name'][attribute])
+
+         def to_scim_resource(self):
+             rv = {
+                 "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                 "id": self.id,
+                 "userName": self.userName,
+                 "name": {
+                     "familyName": self.familyName,
+                     "givenName": self.givenName,
+                     "middleName": self.middleName,
+                 },
+                 "active": self.active,
+                 "meta": {
+                     "resourceType": "User",
+                     "location": url_for('user_get',
+                                         user_id=self.id,
+                                         _external=True),
+                     # "created": "2010-01-23T04:56:22Z",
+                     # "lastModified": "2011-05-13T04:42:34Z",
+                 }
+             }
+             return rv
+   #+END_SRC
+   
+** Support for SCIM Query resources
+
+   We also define a =ListResponse= class, which is used to return an
+   array of SCIM resources into a
+   [[https://tools.ietf.org/html/rfc7644#section-3.4.2][Query Resource]].
+
+   #+NAME: list-response-class
+   #+BEGIN_SRC python
+     class ListResponse():
+         def __init__(self, list, start_index=1, count=None, total_results=0):
+             self.list = list
+             self.start_index = start_index
+             self.count = count
+             self.total_results = total_results
+
+         def to_scim_resource(self):
+             rv = {
+                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+                 "totalResults": self.total_results,
+                 "startIndex": self.start_index,
+                 "Resources": []
+             }
+             resources = []
+             for item in self.list:
+                 resources.append(item.to_scim_resource())
+             if self.count:
+                 rv['itemsPerPage'] = self.count
+             rv['Resources'] = resources
+             return rv
+   #+END_SRC
+
+** Support for SCIM error messages
+
+   Given a =message= and HTTP =status_code=, this will return a Flask
+   response with the appropriately formatted SCIM error message.
+
+   See [[https://tools.ietf.org/html/rfc7644#section-3.12][section 3.12]] of [[https://tools.ietf.org/html/rfc7644][RFC 7644]] for details.
+
+   #+NAME: scim-error
+   #+BEGIN_SRC python
+     def scim_error(message, status_code):
+         rv = {
+             "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+             "detail": message,
+             "status": str(status_code)
+         }
+         return flask.jsonify(rv), status_code
+   #+END_SRC
+
+** Socket.IO support
+
+   This sample application makes use of Socket.IO to give you a "real
+   time" view of SCIM requests that Okta makes to this sample
+   application.
+
+   When you load the sample application (the "/" route), your browser
+   will be sent a web application that uses Socket.IO to display
+   updates without the need for you to reload the page:
+
+   #+NAME: hello-route
+   #+BEGIN_SRC python
+     @app.route('/')
+     def hello():
+         return render_template('base.html')
+   #+END_SRC
+
+   This page is updated using the functions below:
+
+   - =send_to_browser= is syntactic sugar that will =emit= Socket.IO
+     messages to the browser with the proper =broadcast= and
+     =namespace= settings.
+   - =render_json= is more syntactic sugar which is used to render
+     JSON replies to Okta's SCIM client and =emit= the SCIM resource
+     to Socket.IO at the same time.
+   - =test_connect= is the function called with a browser first starts
+     up Socket.IO, it returns a list of currently active users to the
+     browser via Socket.IO.
+   - =test_disconnect= is a stub that shows how to handle Socket.IO
+     "disconnect" messages.
+
+   
+   #+NAME: socket-io-support
+   #+BEGIN_SRC python
+     def send_to_browser(obj):
+         socketio.emit('user',
+                       {'data': obj},
+                       broadcast=True,
+                       namespace='/test')
+
+
+     def render_json(obj):
+         rv = obj.to_scim_resource()
+         send_to_browser(rv)
+         return flask.jsonify(rv)
+
+
+     @socketio.on('connect', namespace='/test')
+     def test_connect():
+         for user in User.query.filter_by(active=True).all():
+             emit('user', {'data': user.to_scim_resource()})
+
+
+     @socketio.on('disconnect', namespace='/test')
+     def test_disconnect():
+         print('Client disconnected')
+   #+END_SRC
+
+** Socket.IO application
+   Below is the JavaScript that powers the Socket.IO application
+   described above. For the full contents of the HTML that this
+   JavaScript is part of, see the =base.html= file in the =templates=
+   directory of this project.
+
+   #+NAME: socket-io-application
+   #+BEGIN_SRC javascript
+     $(document).ready(function () {
+     namespace = '/test'; // change to an empty string to use the global namespace
+     var uri = 'https://' + document.domain  + namespace;
+     console.log(uri);
+     var socket = io.connect(uri);
+
+     socket.on('user', function(msg) {
+     console.log(msg);
+     var user = msg.data;
+     var user_element = '#' + user.id
+     var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+     if($(user_element).length && user.active) {
+     $(user_element).replaceWith(userRow);
+     } else if (user.active) {
+     $('#users-table').append(userRow);
+     }
+
+     if($(user_element).length && user.active) {
+     $(user_element).show();
+     }
+     if($(user_element).length && !user.active) {
+     $(user_element).hide();
+     }
+     });
+         
+     });
+   #+END_SRC
+** Support for running from the command line
+   This bit of code allows you to run the sample application by typing
+   =python scim-server.py= from your command line:
+   #+NAME: run-from-command-line
+   #+BEGIN_SRC python
+     if __name__ == "__main__":
+         app.debug = True
+         socketio.run(app)
+   #+END_SRC
 ** Dependencies
-   Here are the dependencies that this example SCIM server depends on:
+   Here is a detailed list of the dependencies that this example SCIM
+   server depends on, and what each dependency does.
 
    #+tblname: requirements-table
    |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
@@ -732,6 +978,7 @@
    | wsgiref          | >=       |   0.1.2 | Provides validation support for WSGI.                                  | https://pypi.python.org/pypi/wsgiref                     |
    |------------------+----------+---------+------------------------------------------------------------------------+----------------------------------------------------------|
    
+   (This table is used to generate the =requirements.txt= file for this project)
 *** How to turn the table above into a requirements.txt file	   :noexport:
     To turn the table above into a =requirements.txt= file, we need to
     do the following:
@@ -790,156 +1037,6 @@
    python-socketio>=1.0
    six>=1.10.0
    wsgiref>=0.1.2
-   #+END_SRC
-
-** How the example server works
-   Below are instructions for writing a SCIM server in Python, using
-   Flask and SQLAlchemy.
-
-   A completed version of this example server is available in this git
-   repository in the file named =scim-server.py=.
-
-   We start by importing the Python packages that the SCIM server will
-   use:
-   #+NAME: imports
-   #+BEGIN_SRC python
-     import re
-
-     from flask import Flask
-     from flask import render_template
-     from flask import request
-     from flask import url_for
-     from flask_socketio import SocketIO
-     from flask_socketio import emit
-     from flask_sqlalchemy import SQLAlchemy
-     import flask
-   #+END_SRC
-
-   Next we initialize Flask, SQLAlchemy, and SocketIO:
-   #+NAME: setup
-   #+BEGIN_SRC python
-     app = Flask(__name__)
-     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
-     db = SQLAlchemy(app)
-     socketio = SocketIO(app)
-   #+END_SRC
-
-   #+NAME: list-response-class
-   #+BEGIN_SRC python
-     class ListResponse():
-         def __init__(self, list, start_index=1, count=None, total_results=0):
-             self.list = list
-             self.start_index = start_index
-             self.count = count
-             self.total_results = total_results
-
-         def to_scim_resource(self):
-             rv = {
-                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-                 "totalResults": self.total_results,
-                 "startIndex": self.start_index,
-                 "Resources": []
-             }
-             resources = []
-             for item in self.list:
-                 resources.append(item.to_scim_resource())
-             if self.count:
-                 rv['itemsPerPage'] = self.count
-             rv['Resources'] = resources
-             return rv
-   #+END_SRC
-
-   #+NAME: user-db-model
-   #+BEGIN_SRC python
-     class User(db.Model):
-         __tablename__ = 'users'
-         <<user-db-model-id-attribute>>
-         <<user-db-model-active-attribute>>
-         <<user-db-model-user-attributes>>
-
-         def __init__(self, resource):
-             self.update(resource)
-
-         def update(self, resource):
-             for attribute in ['userName', 'active']:
-                 if attribute in resource:
-                     setattr(self, attribute, resource[attribute])
-             for attribute in ['givenName', 'middleName', 'familyName']:
-                 if attribute in resource['name']:
-                     setattr(self, attribute, resource['name'][attribute])
-
-         def to_scim_resource(self):
-             rv = {
-                 "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                 "id": self.id,
-                 "userName": self.userName,
-                 "name": {
-                     "familyName": self.familyName,
-                     "givenName": self.givenName,
-                     "middleName": self.middleName,
-                 },
-                 "active": self.active,
-                 "meta": {
-                     "resourceType": "User",
-                     "location": url_for('user_get',
-                                         user_id=self.id,
-                                         _external=True),
-                     # "created": "2010-01-23T04:56:22Z",
-                     # "lastModified": "2011-05-13T04:42:34Z",
-                 }
-             }
-             return rv
-   #+END_SRC
-   
-   #+NAME: scim-error
-   #+BEGIN_SRC python
-     def scim_error(message, error_code):
-         rv = {
-             "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-             "detail": message,
-             "status": str(error_code)
-         }
-         return flask.jsonify(rv), error_code
-   #+END_SRC
-
-   #+NAME: socket-io-support
-   #+BEGIN_SRC python
-     def send_to_browser(obj):
-         socketio.emit('user',
-                       {'data': obj},
-                       broadcast=True,
-                       namespace='/test')
-
-
-     def render_json(obj):
-         rv = obj.to_scim_resource()
-         send_to_browser(rv)
-         return flask.jsonify(rv)
-
-
-     @socketio.on('connect', namespace='/test')
-     def test_connect():
-         for user in User.query.filter_by(active=True).all():
-             emit('user', {'data': user.to_scim_resource()})
-
-
-     @socketio.on('disconnect', namespace='/test')
-     def test_disconnect():
-         print('Client disconnected')
-   #+END_SRC
-   
-   #+NAME: hello-route
-   #+BEGIN_SRC python
-     @app.route('/')
-     def hello():
-         return render_template('base.html')
-   #+END_SRC
-   
-   #+NAME: run-from-command-line
-   #+BEGIN_SRC python
-     if __name__ == "__main__":
-         app.debug = True
-         socketio.run(app)
    #+END_SRC
    
 * Files 							   :noexport:
@@ -1043,32 +1140,7 @@
          </div><!-- /.container -->
          <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
          <script type="text/javascript">
-           $(document).ready(function () {
-           namespace = '/test'; // change to an empty string to use the global namespace
-           var uri = 'https://' + document.domain  + namespace;
-           console.log(uri);
-           var socket = io.connect(uri);
-           
-           socket.on('user', function(msg) {
-           console.log(msg);
-           var user = msg.data;
-           var user_element = '#' + user.id
-           var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
-           if($(user_element).length && user.active) {
-           $(user_element).replaceWith(userRow);
-           } else if (user.active) {
-           $('#users-table').append(userRow);
-           }
-           
-           if($(user_element).length && user.active) {
-           $(user_element).show();
-           }
-           if($(user_element).length && !user.active) {
-           $(user_element).hide();
-           }
-           });
-               
-           });
+           <<socket-io-application>>
          </script>
          <!-- Placed at the end of the document so the pages load faster -->
          <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
@@ -1083,8 +1155,7 @@
      .DS_Store
      .exports
    #+END_SRC
-** LICENSE.txt
-* License information						   :noexport:
+* License information
   #+BEGIN_SRC text :tangle LICENSE.txt :padline no
     Copyright © 2016, Okta, Inc.
 

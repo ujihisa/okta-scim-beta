@@ -665,3 +665,427 @@ Work with your contact at Okta to start your submission.
 
 If you have any questions about this document, or how to work with
 SCIM, send an email to [developers@okta.com](developers@okta.com).
+
+# More details on the example SCIM server
+
+Included in this git repository is an example SCIM server written in
+Python. 
+
+This example SCIM server demonstrates how to implement a basic SCIM
+server that can create, read, update, and deactivate Okta users.
+
+The "Required SCIM Capabilities" section has the sample code that
+handles the HTTP requests to this sample application, below we
+describe the rest of code used in the example.
+
+## How to run
+
+Here is how to run the example code on your machine:
+
+First, start by doing a `git checkout` of this repository, then
+`cd` to directory that `git` creates. Then, do the following:
+
+1.  Create an isolated Python environment named "venv" using [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
+    
+        $ virtualenv venv
+2.  Next, activate the newly created virtualenv:
+    
+        $ source venv/bin/activate
+3.  Then, install the dependencies for the sample SCIM server using
+    Python's ["pip" package manager](https://en.wikipedia.org/wiki/Pip_%28package_manager%29):
+    
+        $ pip install -r requirements.txt
+4.  Finally, start the example SCIM server using this command:
+    
+        $ python scim-server.py
+
+## Introduction
+
+Below are instructions for writing a SCIM server in Python, using
+Flask and SQLAlchemy.
+
+A completed version of this example server is available in this git
+repository in the file named `scim-server.py`.
+
+## Imports
+
+We start by importing the Python packages that the SCIM server will
+use:
+
+    import re
+    
+    from flask import Flask
+    from flask import render_template
+    from flask import request
+    from flask import url_for
+    from flask_socketio import SocketIO
+    from flask_socketio import emit
+    from flask_sqlalchemy import SQLAlchemy
+    import flask
+
+## Setup
+
+`re` adds support for regular expression parsing, `flask` adds the Flask
+web framework, `flask_socketio` and `flask_sqlalchemy` add a idiomatic support for
+their respective technologies to Flask.
+
+Next we initialize Flask, SQLAlchemy, and SocketIO:
+
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
+    db = SQLAlchemy(app)
+    socketio = SocketIO(app)
+
+## SQLAlchemy support for the "users" table:
+
+Below is the class that SQLAlchemy uses to give us easy access to
+the "users" table.
+
+The `update` method is used to "merge" or "update" a new User object
+into an existing User object. This is used to simplify the code for
+the code that handles PUT calls to `/Users/{id}`.
+
+The `to_scim_resource` method is used to turn a User object into
+a [SCIM "User" resource schema](https://tools.ietf.org/html/rfc7643#section-4.1).
+
+    class User(db.Model):
+        __tablename__ = 'users'
+        <<user-db-model-id-attribute>>
+        <<user-db-model-active-attribute>>
+        <<user-db-model-user-attributes>>
+    
+        def __init__(self, resource):
+            self.update(resource)
+    
+        def update(self, resource):
+            for attribute in ['userName', 'active']:
+                if attribute in resource:
+                    setattr(self, attribute, resource[attribute])
+            for attribute in ['givenName', 'middleName', 'familyName']:
+                if attribute in resource['name']:
+                    setattr(self, attribute, resource['name'][attribute])
+    
+        def to_scim_resource(self):
+            rv = {
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "id": self.id,
+                "userName": self.userName,
+                "name": {
+                    "familyName": self.familyName,
+                    "givenName": self.givenName,
+                    "middleName": self.middleName,
+                },
+                "active": self.active,
+                "meta": {
+                    "resourceType": "User",
+                    "location": url_for('user_get',
+                                        user_id=self.id,
+                                        _external=True),
+                    # "created": "2010-01-23T04:56:22Z",
+                    # "lastModified": "2011-05-13T04:42:34Z",
+                }
+            }
+            return rv
+
+## Support for SCIM Query resources
+
+We also define a `ListResponse` class, which is used to return an
+array of SCIM resources into a
+[Query Resource](https://tools.ietf.org/html/rfc7644#section-3.4.2).
+
+    class ListResponse():
+        def __init__(self, list, start_index=1, count=None, total_results=0):
+            self.list = list
+            self.start_index = start_index
+            self.count = count
+            self.total_results = total_results
+    
+        def to_scim_resource(self):
+            rv = {
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+                "totalResults": self.total_results,
+                "startIndex": self.start_index,
+                "Resources": []
+            }
+            resources = []
+            for item in self.list:
+                resources.append(item.to_scim_resource())
+            if self.count:
+                rv['itemsPerPage'] = self.count
+            rv['Resources'] = resources
+            return rv
+
+## Support for SCIM error messages
+
+Given a `message` and HTTP `status_code`, this will return a Flask
+response with the appropriately formatted SCIM error message.
+
+See [section 3.12](https://tools.ietf.org/html/rfc7644#section-3.12) of [RFC 7644](https://tools.ietf.org/html/rfc7644) for details.
+
+    def scim_error(message, status_code):
+        rv = {
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+            "detail": message,
+            "status": str(status_code)
+        }
+        return flask.jsonify(rv), status_code
+
+## Socket.IO support
+
+This sample application makes use of Socket.IO to give you a "real
+time" view of SCIM requests that Okta makes to this sample
+application.
+
+When you load the sample application (the "/" route), your browser
+will be sent a web application that uses Socket.IO to display
+updates without the need for you to reload the page:
+
+    @app.route('/')
+    def hello():
+        return render_template('base.html')
+
+This page is updated using the functions below:
+
+-   `send_to_browser` is syntactic sugar that will `emit` Socket.IO
+    messages to the browser with the proper `broadcast` and
+    `namespace` settings.
+-   `render_json` is more syntactic sugar which is used to render
+    JSON replies to Okta's SCIM client and `emit` the SCIM resource
+    to Socket.IO at the same time.
+-   `test_connect` is the function called with a browser first starts
+    up Socket.IO, it returns a list of currently active users to the
+    browser via Socket.IO.
+-   `test_disconnect` is a stub that shows how to handle Socket.IO
+    "disconnect" messages.
+
+    def send_to_browser(obj):
+        socketio.emit('user',
+                      {'data': obj},
+                      broadcast=True,
+                      namespace='/test')
+    
+    
+    def render_json(obj):
+        rv = obj.to_scim_resource()
+        send_to_browser(rv)
+        return flask.jsonify(rv)
+    
+    
+    @socketio.on('connect', namespace='/test')
+    def test_connect():
+        for user in User.query.filter_by(active=True).all():
+            emit('user', {'data': user.to_scim_resource()})
+    
+    
+    @socketio.on('disconnect', namespace='/test')
+    def test_disconnect():
+        print('Client disconnected')
+
+## Socket.IO application
+
+Below is the JavaScript that powers the Socket.IO application
+described above. For the full contents of the HTML that this
+JavaScript is part of, see the `base.html` file in the `templates`
+directory of this project.
+
+    $(document).ready(function () {
+    namespace = '/test'; // change to an empty string to use the global namespace
+    var uri = 'https://' + document.domain  + namespace;
+    console.log(uri);
+    var socket = io.connect(uri);
+    
+    socket.on('user', function(msg) {
+    console.log(msg);
+    var user = msg.data;
+    var user_element = '#' + user.id
+    var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+    if($(user_element).length && user.active) {
+    $(user_element).replaceWith(userRow);
+    } else if (user.active) {
+    $('#users-table').append(userRow);
+    }
+    
+    if($(user_element).length && user.active) {
+    $(user_element).show();
+    }
+    if($(user_element).length && !user.active) {
+    $(user_element).hide();
+    }
+    });
+    
+    });
+
+## Support for running from the command line
+
+This bit of code allows you to run the sample application by typing
+`python scim-server.py` from your command line:
+
+    if __name__ == "__main__":
+        app.debug = True
+        socketio.run(app)
+
+## Dependencies
+
+Here is a detailed list of the dependencies that this example SCIM
+server depends on, and what each dependency does.
+
+<table id="requirements-table" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="right" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">name</th>
+<th scope="col" class="left">equality</th>
+<th scope="col" class="right">version</th>
+<th scope="col" class="left">description</th>
+<th scope="col" class="left">url</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="left">Flask</td>
+<td class="left">>=</td>
+<td class="right">0.10.1</td>
+<td class="left">A web framework built with a small core and easy-to-extend philosophy.</td>
+<td class="left"><http://flask.pocoo.org/></td>
+</tr>
+
+
+<tr>
+<td class="left">Flask-SQLAlchemy</td>
+<td class="left">>=</td>
+<td class="right">2.1</td>
+<td class="left">Adds SQLAlchemy support to Flask.</td>
+<td class="left"><https://github.com/mitsuhiko/flask-sqlalchemy></td>
+</tr>
+
+
+<tr>
+<td class="left">Flask-SocketIO</td>
+<td class="left">>=</td>
+<td class="right">2.1</td>
+<td class="left">Socket.IO integration for Flask applications.</td>
+<td class="left"><https://github.com/miguelgrinberg/Flask-SocketIO></td>
+</tr>
+
+
+<tr>
+<td class="left">gunicorn</td>
+<td class="left">>=</td>
+<td class="right">19.4.5</td>
+<td class="left">A pre-fork worker model HTTP server for WSGI.</td>
+<td class="left"><https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29></td>
+</tr>
+
+
+<tr>
+<td class="left">Jinja2</td>
+<td class="left">>=</td>
+<td class="right">2.8</td>
+<td class="left">A modern and designer-friendly templating language.</td>
+<td class="left"><http://jinja.pocoo.org/docs/dev/></td>
+</tr>
+
+
+<tr>
+<td class="left">MarkupSafe</td>
+<td class="left">>=</td>
+<td class="right">0.23</td>
+<td class="left">A library for Python that implements a unicode string.</td>
+<td class="left"><http://www.pocoo.org/projects/markupsafe/></td>
+</tr>
+
+
+<tr>
+<td class="left">SQLAlchemy</td>
+<td class="left">>=</td>
+<td class="right">1.0.12</td>
+<td class="left">SQL toolkit and Object Relational Mapper.</td>
+<td class="left"><https://pypi.python.org/pypi/SQLAlchemy></td>
+</tr>
+
+
+<tr>
+<td class="left">Werkzeug</td>
+<td class="left">>=</td>
+<td class="right">0.11.4</td>
+<td class="left">A WSGI utility library for Python.</td>
+<td class="left"><http://werkzeug.pocoo.org/></td>
+</tr>
+
+
+<tr>
+<td class="left">itsdangerous</td>
+<td class="left">>=</td>
+<td class="right">0.24</td>
+<td class="left">Used to send data to untrusted environments.</td>
+<td class="left"><http://pythonhosted.org/itsdangerous/></td>
+</tr>
+
+
+<tr>
+<td class="left">python-engineio</td>
+<td class="left">>=</td>
+<td class="right">0.8.8</td>
+<td class="left">Implementation of the Engine.IO realtime server.</td>
+<td class="left"><https://github.com/miguelgrinberg/python-engineio></td>
+</tr>
+
+
+<tr>
+<td class="left">python-socketio</td>
+<td class="left">>=</td>
+<td class="right">1.0</td>
+<td class="left">Implementation of the Socket.IO realtime server.</td>
+<td class="left"><https://github.com/miguelgrinberg/python-socketio></td>
+</tr>
+
+
+<tr>
+<td class="left">six</td>
+<td class="left">>=</td>
+<td class="right">1.10.0</td>
+<td class="left">Python 2 and 3 compatibility library.</td>
+<td class="left"><https://pypi.python.org/pypi/six></td>
+</tr>
+
+
+<tr>
+<td class="left">wsgiref</td>
+<td class="left">>=</td>
+<td class="right">0.1.2</td>
+<td class="left">Provides validation support for WSGI.</td>
+<td class="left"><https://pypi.python.org/pypi/wsgiref></td>
+</tr>
+</tbody>
+</table>
+
+(This table is used to generate the `requirements.txt` file for this project)
+
+# License information
+
+    Copyright © 2016, Okta, Inc.
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+        http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
