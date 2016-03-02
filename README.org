@@ -50,24 +50,27 @@
   to receive user provisioning and profile update message from Okta
   using the open SCIM standard.
 * Getting into the Okta SCIM Beta
-  To request access to the Okta SCIM beta, send an email to [[mailto:developers@okta.com][developers@okta.com]]
-  with the following information:
+  Before building your SCIM Server, please apply for admission into
+  the Okta SCIM Beta by sending an email to [[mailto:developers@okta.com][developers@okta.com]] with
+  details on customer demand and urgency (e.g. # of joint customers
+  that would benefit, deployment deadlines). 
+
+  Once admitted, please provide the following starter info about your
+  SCIM Server to get a generic SCIM template application added to your
+  Okta Developer Edition org:
 
   1. The =oktapreview.com= Okta org that you will use to develop your
      SCIM integration. (If you don't have an Okta org, create an
      [[https://www.okta.com/developer/signup/][Okta Developer Edition]] org.)
-  2. The Base URL to which Okta will send SCIM requests to your service.
+  2. The Base URL to which Okta will send SCIM requests to your
+     service.
   3. The Authentication method that Okta will use to authenticate with
      your service.
+  4. Details on the Base URL and Authentication method are covered
+     below.
 
-  Details on the Base URL and Authentication method are covered below.
-
-  Upon approval into the Okta SCIM beta, your =oktapreview.com= Okta
-  org will be enabled for the SCIM beta, and a template SCIM
-  integration will be added to that org.
-
-  Once the SCIM template is in your Okta org, you can
-  start testing on your SCIM integration directly with Okta.
+  Once the SCIM template app is in your Okta org, you can start
+  testing on your SCIM integration directly with Okta.
 * Understanding of User Provisioning in Okta
   Okta is a universal directory with the main focus in storing
   identity related information.  Users can be created in Okta directly
@@ -994,7 +997,7 @@
    and the value is the column content. This array of dictionaries is
    used below to generate the =requirements.txt= file.
    #+NAME: table-to-dict
-   #+BEGIN_SRC python :var table=requirements-table :results code
+   #+BEGIN_SRC python :var table=requirements-table :results code :cache yes
      headers = table[0]
      values = table[1:]
 
@@ -1004,9 +1007,9 @@
 
      return data
    #+END_SRC
-   #+RESULTS: table-to-dict
+   #+RESULTS[a4e69db36a954654c36815962bfade1606a3dee2]: table-to-dict
    #+BEGIN_SRC python
-   [{'version': '0.10.1', 'equality': '>=', 'name': 'Flask', 'description': '[[http://flask.pocoo.org/][A web framework built with a small core and easy-to-extend philosophy.]]'}, {'version': 2.1, 'equality': '>=', 'name': 'Flask-SQLAlchemy', 'description': '[[https://github.com/mitsuhiko/flask-sqlalchemy][Adds SQLAlchemy support to Flask.]]'}, {'version': 2.1, 'equality': '>=', 'name': 'Flask-SocketIO', 'description': '[[http://socket.io/][Socket.IO]] integration [[https://github.com/miguelgrinberg/Flask-SocketIO][for Flask applications.]]'}, {'version': '19.4.5', 'equality': '>=', 'name': 'gunicorn', 'description': '[[https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29][A pre-fork worker model HTTP server]] for [[https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface][WSGI.]]'}, {'version': 2.8, 'equality': '>=', 'name': 'Jinja2', 'description': '[[http://jinja.pocoo.org/docs/dev/][A modern and designer-friendly templating language.]]'}, {'version': 0.23, 'equality': '>=', 'name': 'MarkupSafe', 'description': '[[http://www.pocoo.org/projects/markupsafe/][A library for Python that implements a unicode string.]]'}, {'version': '1.0.12', 'equality': '>=', 'name': 'SQLAlchemy', 'description': '[[https://pypi.python.org/pypi/SQLAlchemy][SQL toolkit and Object Relational Mapper.]]'}, {'version': '0.11.4', 'equality': '>=', 'name': 'Werkzeug', 'description': '[[http://werkzeug.pocoo.org/][A WSGI utility library for Python.]]'}, {'version': 0.24, 'equality': '>=', 'name': 'itsdangerous', 'description': '[[http://pythonhosted.org/itsdangerous/][Used to send data to untrusted environments.]]'}, {'version': '0.8.8', 'equality': '>=', 'name': 'python-engineio', 'description': '[[https://github.com/miguelgrinberg/python-engineio][Implementation of the Engine.IO realtime server.]]'}, {'version': 1.0, 'equality': '>=', 'name': 'python-socketio', 'description': '[[https://github.com/miguelgrinberg/python-socketio][Implementation of the Socket.IO realtime server.]]'}, {'version': '1.10.0', 'equality': '>=', 'name': 'six', 'description': '[[https://pypi.python.org/pypi/six][Python 2 and 3 compatibility library.]]'}, {'version': '0.1.2', 'equality': '>=', 'name': 'wsgiref', 'description': '[[https://pypi.python.org/pypi/wsgiref][Provides validation support for WSGI.]]'}]
+   [{'url': '=http://flask.pocoo.org=', 'version': '0.10.1', 'equality': '>=', 'name': 'Flask', 'description': 'A web framework built with a small core and easy-to-extend philosophy.'}, {'url': '=https://github.com/mitsuhiko/flask-sqlalchemy=', 'version': 2.1, 'equality': '>=', 'name': 'Flask-SQLAlchemy', 'description': 'Adds SQLAlchemy support to Flask.'}, {'url': '=https://github.com/miguelgrinberg/Flask-SocketIO=', 'version': 2.1, 'equality': '>=', 'name': 'Flask-SocketIO', 'description': 'Socket.IO integration for Flask applications.'}, {'url': '=https://en.wikipedia.org/wiki/Gunicorn_%28HTTP_server%29=', 'version': '19.4.5', 'equality': '>=', 'name': 'gunicorn', 'description': 'A pre-fork worker model HTTP server for WSGI.'}, {'url': '=http://jinja.pocoo.org/docs/dev=', 'version': 2.8, 'equality': '>=', 'name': 'Jinja2', 'description': 'A modern and designer-friendly templating language.'}, {'url': '=http://www.pocoo.org/projects/markupsafe=', 'version': 0.23, 'equality': '>=', 'name': 'MarkupSafe', 'description': 'A library for Python that implements a unicode string.'}, {'url': '=https://pypi.python.org/pypi/SQLAlchemy=', 'version': '1.0.12', 'equality': '>=', 'name': 'SQLAlchemy', 'description': 'SQL toolkit and Object Relational Mapper.'}, {'url': '=http://werkzeug.pocoo.org=', 'version': '0.11.4', 'equality': '>=', 'name': 'Werkzeug', 'description': 'A WSGI utility library for Python.'}, {'url': '=http://pythonhosted.org/itsdangerous=', 'version': 0.24, 'equality': '>=', 'name': 'itsdangerous', 'description': 'Used to send data to untrusted environments.'}, {'url': '=https://github.com/miguelgrinberg/python-engineio=', 'version': '0.8.8', 'equality': '>=', 'name': 'python-engineio', 'description': 'Implementation of the Engine.IO realtime server.'}, {'url': '=https://github.com/miguelgrinberg/python-socketio=', 'version': 1.0, 'equality': '>=', 'name': 'python-socketio', 'description': 'Implementation of the Socket.IO realtime server.'}, {'url': '=https://pypi.python.org/pypi/six=', 'version': '1.10.0', 'equality': '>=', 'name': 'six', 'description': 'Python 2 and 3 compatibility library.'}, {'url': '=https://pypi.python.org/pypi/wsgiref=', 'version': '0.1.2', 'equality': '>=', 'name': 'wsgiref', 'description': 'Provides validation support for WSGI.'}]
    #+END_SRC
 *** Creating the =requirements.txt= file			   :noexport:
    This code takes the requirements table above and turns it into a
@@ -1014,7 +1017,7 @@
    org-bable-tangle= is run.
 
    #+HEADER: :results_switches ":tangle requirements.txt :noweb yes :exports none :padline no"
-   #+BEGIN_SRC python :var table=requirements-table :results code :noweb yes
+   #+BEGIN_SRC python :var table=requirements-table :results code :noweb yes :cache yes
      data = <<table-to-dict(requirements-table)>>
      output = ''
      for package in data:
@@ -1022,7 +1025,7 @@
      return output
    #+END_SRC
 
-   #+RESULTS:
+   #+RESULTS[5c405b5f5d2585aa053c21b101e02f78bede7a67]:
    #+BEGIN_SRC python :tangle requirements.txt :noweb yes :exports none :padline no
    Flask>=0.10.1
    Flask-SQLAlchemy>=2.1
@@ -1038,6 +1041,7 @@
    six>=1.10.0
    wsgiref>=0.1.2
    #+END_SRC
+
    
 * Files 							   :noexport:
 ** scim-server.py
