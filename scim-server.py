@@ -85,13 +85,13 @@ class User(db.Model):
         return rv
 
 
-def scim_error(message, error_code):
+def scim_error(message, status_code):
     rv = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
         "detail": message,
-        "status": str(error_code)
+        "status": str(status_code)
     }
-    return flask.jsonify(rv), error_code
+    return flask.jsonify(rv), status_code
 
 
 def send_to_browser(obj):
