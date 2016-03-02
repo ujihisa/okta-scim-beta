@@ -53,7 +53,7 @@ Below are the main operations in Okta's SCIM user provisioning lifecycle:
 1.  Create a user account.
 2.  Read a list of accounts, with support for searching for a preexisting account.
 3.  Update an account (user profile changes, entitlement changes, etc).
-4.  Deactivate of an account.
+4.  Deactivate an account.
 
 In Okta, an application instance is a connector that provides Single Sign-On
 and provisioning functionality with the target application.
@@ -137,7 +137,7 @@ Here is how our Python/Flask sample application defines these attributes:
 In addition to the basic user schema user attributes described
 above, your SCIM API must also have a unique identifier for each
 user resource and should also support marking resources as "active"
-or "inactive".
+or "inactive."
 
 In the SCIM specification, the `id` attribute is used to uniquely
 identify resources. [Section 3.1](//tools.ietf.org/html/rfc7643#section-3.1) of [RFC 7643](https://tools.ietf.org/html/rfc7643) provides more details
@@ -146,15 +146,15 @@ on the `id` attribute:
 > A unique identifier for a SCIM resource as defined by the service
 > provider.  Each representation of the resource MUST include a
 > non-empty "id" value.  This identifier MUST be unique across the
-> entire set of resources for the SCIM service provider. It MUST be a
+> SCIM service provider's entire set of resources.  It MUST be a
 > stable, non-reassignable identifier that does not change when the
 > same resource is returned in subsequent requests.  The value of
 > the "id" attribute is always issued by the service provider and
 > MUST NOT be specified by the client.  The string "bulkId" is a
 > reserved keyword and MUST NOT be used within any unique identifier
 > value.  The attribute characteristics are "caseExact" as "true", a
-> mutability of "readOnly," and a "returned" characteristic of
-> "always."
+> mutability of "readOnly", and a "returned" characteristic of
+> "always".
 
 Our sample application defines `id` as a monotonically
 increasing integer:
@@ -196,13 +196,12 @@ Okta will call this SCIM API endpoint under the following circumstances:
     
     When a user is assigned to an Okta application using the "Assign
     to People" button in the "People" tab.
-
 -   **Group-based assignment**
     
     When a user is added to a group that is assigned to an Okta
     application. For example, an Okta administrator can assign a
     group of users to an Okta application using the "Assign to
-    Groups" button in the "Groups" tab. One a group is assigned to an
+    Groups" button in the "Groups" tab. When a group is assigned to an
     Okta application, Okta sends updates to the assigned
     application when a user is added or removed from that group.
 
@@ -263,7 +262,8 @@ with support for filtering and pagination:
         return flask.jsonify(rv.to_scim_resource())
 
 > If you want to see the SQL query that SQLAlchemy is using for
-> the query, add this code after the `query` statement that you wantto see: `print(str(query.statement))`
+> the query, add this code after the `query` statement that you want
+> to see: `print(str(query.statement))`
 
 For more details on the `/Users` SCIM endpoint, see [section 3.4.2](https://tools.ietf.org/html/rfc7644#section-3.4.2)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -289,7 +289,7 @@ When a profile attribute of a user assigned to your SCIM enabled
 application is changed, Okta will do the following:
 
 -   Make a GET request against `/Users/{id}` on your SCIM API for the
-    user to updated.
+    user to update.
 -   Take the resource returned from your SCIM API and update only the
     attributes that need to be updated.
 -   Make a PUT request against `/Users/{id}` in your SCIM API with
@@ -458,7 +458,7 @@ And here is how the sample application handles pagination with SQLAlchemy:
     query = query.offset(start_index).limit(count)
 
 Note: This code subtracts "1" from the
-`startIndex`, because because `startIndex` is a [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
+`startIndex`, because `startIndex` is [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
 the OFFSET statement is [0-indexed](http://www.postgresql.org/docs/8.0/static/queries-limit.html).
 
 For more details pagination on a SCIM 2.0 endpoint, see [section 3.4.2.4](https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
@@ -589,7 +589,8 @@ application to Okta is the following:
 2.  Check the Attribute Mappings for your application.
 
 ## Check the Profile Attributes for Your Application
-you should check the 
+
+Before submitting your application to Okta, you should check the
 User Attributes to make sure that the attributes are set to what
 you would want your users to see.
 
