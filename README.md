@@ -9,96 +9,95 @@ If you haven't heard of SCIM before, here is a good summary from the
 > standard for automating the exchange of user identity information
 > between identity domains, or IT systems.
 
-If you are a developer for a cloud application, Okta will allow you
+If you are a developer for a cloud application, Okta allows you
 to receive user provisioning and profile update message from Okta
 using the open SCIM standard.
 
 # Getting into the Okta SCIM Beta
 
-To request access to the Okta SCIM beta, send an email [developers@okta.com](developers@okta.com)
+To request access to the Okta SCIM beta, send an email to [developers@okta.com](developers@okta.com)
 with the following information:
 
 1.  The `oktapreview.com` Okta org that you will use to develop your
-    SCIM integration. (If you don't have an Okta org yet, create an
+    SCIM integration. (If you don't have an Okta org, create an
     [Okta Developer Edition](https://www.okta.com/developer/signup/) org.)
-2.  The Base URL that Okta should use to send SCIM requests to your service.
+2.  The Base URL to which Okta will send SCIM requests to your service.
 3.  The Authentication method that Okta will use to authenticate with
     your service.
 
 Details on the Base URL and Authentication method are covered below.
 
 Upon approval into the Okta SCIM beta, your `oktapreview.com` Okta
-org will be enabled for the SCIM beta and a template SCIM
+org will be enabled for the SCIM beta, and a template SCIM
 integration will be added to that org.
 
-Once you get the SCIM template in your Okta org, you will be able to
+Once the SCIM template is in your Okta org, you can
 start testing on your SCIM integration directly with Okta.
 
 # Understanding of User Provisioning in Okta
 
 Okta is a universal directory with the main focus in storing
 identity related information.  Users can be created in Okta directly
-as local users, or can be imported from external systems like Active
+as local users or imported from external systems like Active
 Directory or a [Human Resource Management Software](https://en.wikipedia.org/wiki/Category:Human_resource_management_software) system.
 
-An Okta user schema will contains many different user attributes,
-but will always contain a user name, first name, last name, and
+An Okta user schema contains many different user attributes,
+but always contains a user name, first name, last name, and
 email address. This schema can be extended.
 
-Okta user attributes can be mapped from a source into Okta, and can
+Okta user attributes can be mapped from a source into Okta and can
 be mapped from Okta to a target.
 
 Below are the main operations in Okta's SCIM user provisioning lifecycle:
 
-1.  Creation of a user account.
+1.  Create a user account.
 2.  Read a list of accounts, with support for searching for a preexisting account.
-3.  Update of an account (user profile changes, entitlement changes, etc).
-4.  Deactivation of an account.
+3.  Update an account (user profile changes, entitlement changes, etc).
+4.  Deactivate of an account.
 
 In Okta, an application instance is a connector that provides Single Sign-On
 and provisioning functionality with the target application.
 
-# Required SCIM capabilities
+# Required SCIM Capabilities
 
 Okta supports provisioning to both SCIM 1.1 and SCIM 2.0 APIs.
 
-If you haven't yet implemented SCIM, we recommend that you implement
+If you haven't implemented SCIM, Okta recommends that you implement
 SCIM 2.0.
 
 Okta implements SCIM 2.0 as described in RFCs [7642](https://tools.ietf.org/html/rfc7642), [7643](https://tools.ietf.org/html/rfc7643), [7644](https://tools.ietf.org/html/rfc7644).
 
 If you are writing a SCIM implementation for the first time, an
-important part of your planning process will be determining which of
+important part of the planning process is determining which of
 Okta's provisioning features your SCIM API can or should support and
 which features you do not need to support.
 
-Specifically, you don't need to fully implement the SCIM 2.0
-specification to work with Okta. At a minimum, Okta requires that
+Specifically, you do not need to implement the SCIM 2.0
+specification fully to work with Okta. At a minimum, Okta requires that
 your SCIM 2.0 API implement the features described below:
 
 ## Base URL
 
 The API endpoint for your SCIM API **MUST** be secured via [TLS](https://tools.ietf.org/html/rfc5246)
-(`https://`), Okta *will not* connect to unsecured API
-endpoints.
+(`https://`), Okta *does not* connect to unsecured API endpoints.
 
-The Base URL for your API endpoint can be whatever you like. If you
+You can choose any Base URL for your API endpoint. If you
 are implementing a brand new SCIM API, we suggest using `/scim/v2`
-as your Base URL, for example: `https://example.com/scim/v2` -
+as your Base URL; for example: `https://example.com/scim/v2` -
 however, you must support the URL structure described in the
 ["SCIM Endpoints and HTTP Methods" section of RFC7644](https://tools.ietf.org/html/rfc7644#section-3.2).
 
 ## Authentication
 
 Your SCIM API **MUST** be secured against anonymous access. At the
-moment, Okta supports authentication against SCIM APIs via one of
+moment, Okta supports authentication against SCIM APIs with one of
 the following methods:
 
 1.  [OAuth 2.0](http://oauth.net/2/)
 2.  [Basic Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication)
 3.  Custom HTTP Header
 
-## Basic user schema
+## Basic User Schema
 
 Your service must be capable of storing the following four user
 attributes:
@@ -109,19 +108,19 @@ attributes:
 4.  Email (`emails`)
 
 Note that Okta supports more than the four user attributes listed
-above.  However, these four attributes are the base attributes that
+above. However, these four attributes are the base attributes that
 you must support.  The full user schema for SCIM 2.0 is described
 in [section 4 of RFC 7643](https://tools.ietf.org/html/rfc7643#section-4).
 
 > **Best Practice:** Keep your User ID distinct from the User Email
 > Address. Many systems use an email address as a user identifier,
 > but this is not recommended, as email addresses often change. Using
-> a unique User ID to identify user resources will prevent future
+> a unique User ID to identify user resources prevents future
 > complications.
 
 If your service supports user attributes beyond those four base
-attributes you will need to add support for those additional
-attributes to your SCIM API. In some cases, you may need to
+attributes, add support for those additional
+attributes to your SCIM API. In some cases, you might need to
 configure Okta to map non-standard user attributes into the user
 profile for your application.
 
@@ -147,15 +146,15 @@ on the `id` attribute:
 > A unique identifier for a SCIM resource as defined by the service
 > provider.  Each representation of the resource MUST include a
 > non-empty "id" value.  This identifier MUST be unique across the
-> SCIM service provider's entire set of resources.  It MUST be a
+> entire set of resources for the SCIM service provider. It MUST be a
 > stable, non-reassignable identifier that does not change when the
 > same resource is returned in subsequent requests.  The value of
 > the "id" attribute is always issued by the service provider and
 > MUST NOT be specified by the client.  The string "bulkId" is a
 > reserved keyword and MUST NOT be used within any unique identifier
 > value.  The attribute characteristics are "caseExact" as "true", a
-> mutability of "readOnly", and a "returned" characteristic of
-> "always".
+> mutability of "readOnly," and a "returned" characteristic of
+> "always."
 
 Our sample application defines `id` as a monotonically
 increasing integer:
@@ -167,9 +166,9 @@ uniquely identifies reach resource, as described in [section 3.1](https://tools.
 [RFC 7643](https://tools.ietf.org/html/rfc7643).
 
 Finally, your SCIM API must also support marking a resource as
-"active" or "inactive". 
+"active" or "inactive."
 
-In our sample application, each user resource has a boolean
+In our sample application, each user resource has a Boolean
 "active" attribute which is used to mark a user resource as
 "active" or "inactive":
 
@@ -197,13 +196,14 @@ Okta will call this SCIM API endpoint under the following circumstances:
     
     When a user is assigned to an Okta application using the "Assign
     to People" button in the "People" tab.
+
 -   **Group-based assignment**
     
     When a user is added to a group that is assigned to an Okta
     application. For example, an Okta administrator can assign a
     group of users to an Okta application using the "Assign to
     Groups" button in the "Groups" tab. One a group is assigned to an
-    Okta application, Okta will send updates to the assigned
+    Okta application, Okta sends updates to the assigned
     application when a user is added or removed from that group.
 
 Below is an example demonstrating how the sample application handles account
@@ -263,8 +263,7 @@ with support for filtering and pagination:
         return flask.jsonify(rv.to_scim_resource())
 
 > If you want to see the SQL query that SQLAlchemy is using for
-> the query, add this code after the `query` statement that you'd
-> like to see: `print(str(query.statement))`
+> the query, add this code after the `query` statement that you wantto see: `print(str(query.statement))`
 
 For more details on the `/Users` SCIM endpoint, see [section 3.4.2](https://tools.ietf.org/html/rfc7644#section-3.4.2)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -290,7 +289,7 @@ When a profile attribute of a user assigned to your SCIM enabled
 application is changed, Okta will do the following:
 
 -   Make a GET request against `/Users/{id}` on your SCIM API for the
-    user to be updated.
+    user to updated.
 -   Take the resource returned from your SCIM API and update only the
     attributes that need to be updated.
 -   Make a PUT request against `/Users/{id}` in your SCIM API with
@@ -320,10 +319,10 @@ of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 ## Deactivate Account: PATCH /Users/{id}
 
 Deprovisioning is perhaps the most important reason customers why
-customers will ask for your application to support provisioning
+customers ask that your application supports provisioning
 with Okta. Your SCIM API should support account deactivation via a
-PATCH to `/Users/{id}` where the payload of the PATCH request will
-set the `active` property of the user to `false`.
+PATCH to `/Users/{id}` where the payload of the PATCH request sets
+the `active` property of the user to `false`.
 
 Your SCIM API should allow account updates at the attribute level.
 If entitlements are supported, your SCIM API should also be able
@@ -331,7 +330,7 @@ to update entitlements based on SCIM profile updates.
 
 Okta will send a PATCH request to your application to deactivate a
 user when an Okta user is "unassigned" from your
-application. Examples of when this happen are as follow:
+application. Examples of when this happen are as follows:
 
 -   A user is manually unassigned from your application.
 -   A user is removed from a group which is assigned to your application.
@@ -389,11 +388,11 @@ follows:
 
 > emails eq "jane@example.com"
 
-Note that, at the moment, Okta will only `eq` filter operator. However, the
+Note that, at the moment, Okta only supports the `eq` filter operator. However, the
 [filtering capabilities](https://tools.ietf.org/html/rfc7644#section-3.4.2.2) described in the SCIM 2.0 Protocol Specification are
 much more complicated.
 
-Here is an example of how you might implement SCIM filtering in Python:
+Here is an example of how to implement SCIM filtering in Python:
 
     request_filter = request.args.get('filter')
     match = None
@@ -449,7 +448,7 @@ Below is an example of a `curl` command that makes a request to the
       "totalResults": 1
     }
 
-And here is how our sample application handles pagination with SQLAlchemy:
+And here is how the sample application handles pagination with SQLAlchemy:
 
     count = int(request.args.get('count', 100))
     start_index = int(request.args.get('startIndex', 1))
@@ -458,8 +457,8 @@ And here is how our sample application handles pagination with SQLAlchemy:
     start_index -= 1
     query = query.offset(start_index).limit(count)
 
-If you are wondering why his code subtracts "1" from the
-`startIndex`, it is because because `startIndex` is a [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
+Note: This code subtracts "1" from the
+`startIndex`, because because `startIndex` is a [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
 the OFFSET statement is [0-indexed](http://www.postgresql.org/docs/8.0/static/queries-limit.html).
 
 For more details pagination on a SCIM 2.0 endpoint, see [section 3.4.2.4](https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
@@ -468,40 +467,39 @@ of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 ## Rate Limiting
 
 Some customer actions, such as adding hundreds of users at once,
-will result in large bursts of HTTP requests to your SCIM API. For
+causes large bursts of HTTP requests to your SCIM API. For
 scenarios like this, we suggest that your SCIM API return rate
 limiting information to Okta via the [HTTP 429 Too Many Requests](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#429)
-status code. This will help Okta throttle the rate at which SCIM
+status code. This helps Okta throttle the rate at which SCIM
 requests are made to your API.
 
 For more details on rate limiting requests using the HTTP 429
 status code, see [section 4](https://tools.ietf.org/html/rfc6585#section-4) of [RFC 6585](https://tools.ietf.org/html/rfc6585).
 
-## SCIM Features not implemented by Okta
+## SCIM Features Not Implemented by Okta
 
-The following features are not yet supported by Okta:
+The following features are currently not supported by Okta:
 
 ### DELETE /Users/{id}
 
 Deleting users via DELETE is covered in
 [section 3.6](https://tools.ietf.org/html/rfc7644#section-3.6) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
-Okta users are never **deleted**, they are **deactivated**
-instead. Because of this, Okta will never make an HTTP DELETE
-request to a user resource on your SCIM API. Instead, Okta will
-make an HTTP PATCH request to set the `active` setting to `false`.
+Okta users are never **deleted**; they are **deactivated**
+instead. Because of this, Okta never makes an HTTP DELETE
+request to a user resource on your SCIM API. Instead, Okta makes
+an HTTP PATCH request to set the `active` setting to `false`.
 
 ### Querying with POST
 
 The ability to query users with a POST request is described in
 [section 3.4.3](https://tools.ietf.org/html/rfc7644#section-3.4.3) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
-Querying using POST is sometimes useful when your query might
-contain
+Querying using POST is sometimes useful if your query contains 
 [personally identifiable information](https://en.wikipedia.org/wiki/Personally_identifiable_information) that would be exposed in
 system logs if used query parameters with a GET request.
 
-Okta does not yet support this feature.
+Okta currently does not support this feature.
 
 ### Bulk Operations
 
@@ -509,7 +507,7 @@ The ability to send a large collection of resource operations in a
 single request is covered in
 [section 3.7](https://tools.ietf.org/html/rfc7644#section-3.7) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
-Okta does not yet support this feature. Okta will currently make
+Okta currently does not support this feature and makes
 one request per resource operation.
 
 ### "/Me" Authenticated Subject Alias
@@ -522,7 +520,7 @@ Okta does not currently make SCIM requests with the `/Me` URI alias.
 
 ### /Groups API endpoint
 
-Okta does not yet support using the `/Groups` endpoint of a SCIM
+Okta currently does not support using the `/Groups` endpoint of a SCIM
 API. When support is added for the `/Groups` endpoint, Okta plans
 on using the following HTTP requests against the `/Groups` endpoint:
 
@@ -537,7 +535,7 @@ on using the following HTTP requests against the `/Groups` endpoint:
 ### /Schemas API endpoint
 
 Okta does not currently make queries against the `/Schemas`
-endpoint, but has plans to do so soon.
+endpoint, but this functionality is being planned.
 
 Here is the specification for the `/Schemas` endpoint, from
 [section 4](https://tools.ietf.org/html/rfc7644#section-4) of [RFC 7644](https://tools.ietf.org/html/rfc7644):
@@ -558,7 +556,7 @@ Here is the specification for the `/Schemas` endpoint, from
 ### /ServiceProviderConfig API endpoint
 
 Okta does not currently make queries against the `/ServiceProviderConfig`
-endpoint, but has plans to do so soon.
+endpoint, but this functionality is being planned.
 
 Here is the specification for the `/ServiceProviderConfig` endpoint, from
 [section 4](https://tools.ietf.org/html/rfc7644#section-4) of [RFC 7644](https://tools.ietf.org/html/rfc7644):
@@ -574,25 +572,24 @@ Here is the specification for the `/ServiceProviderConfig` endpoint, from
 
 ### Filtering on `metadata.lastModified`
 
-Okta will not currently make queries for resources using
+Okta does not currently make queries for resources using
 `lastModified` as part of a filter expression.
 
-Okta plans on adding functionality to fetch incremental updates
+Okta plans to add functionality to fetch incremental updates
 from SCIM APIs by querying for resources using a filter expression
 that requests resources which were updated since the last update.
 
 # Submitting to Okta
 
 Once you have SCIM provisioning working in your Okta application,
-the last thing you will need to do before submitting your
-application to Okta will be do the following:
+the last thing to do before submitting your
+application to Okta is the following:
 
-1.  Check the Profile Attributes for your application
-2.  Check the Attribute Mappings for your application
+1.  Check the Profile Attributes for your application.
+2.  Check the Attribute Mappings for your application.
 
-## Check the Profile Attributes for your application
-
-Before submitting your application to Okta, you should check the
+## Check the Profile Attributes for Your Application
+you should check the 
 User Attributes to make sure that the attributes are set to what
 you would want your users to see.
 
@@ -628,7 +625,7 @@ Check your Profile Attributes as follows:
             true:
             1.  The attribute **must** be set for your provisioning
                 integration to work.
-            2.  An Okta administrator will need to populate a value for
+            2.  An Okta administrator must populate a value for
                 this attribute.
         -   Scope
     -   If the settings for any of your supported user attributes are
@@ -638,7 +635,7 @@ Check your Profile Attributes as follows:
     Click the blue "Back to profiles" link when you are done checking
     the Profile Attributes for your application.
 
-## Check the Attribute Mappings for your application
+## Check the Attribute Mappings for Your Application
 
 The last step for you to complete before submitting your
 application to Okta is to check the User Profile Mappings for your
@@ -660,9 +657,8 @@ following:
 
 ## Contact Okta
 
-Once you've finished verifying that your SCIM API works with Okta,
-checked all of User Attributes, and checked Attribute Mappings,
-then it is time to submit your application to Okta.
+After you've finished verifying that your SCIM API works with Okta,
+it is time to submit your application to Okta.
 
 Work with your contact at Okta to start your submission.
 
