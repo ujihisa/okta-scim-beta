@@ -920,30 +920,29 @@
    #+NAME: socket-io-application
    #+BEGIN_SRC javascript
      $(document).ready(function () {
-     namespace = '/test'; // change to an empty string to use the global namespace
-     var uri = 'https://' + document.domain  + namespace;
-     console.log(uri);
-     var socket = io.connect(uri);
+         namespace = '/test'; // change to an empty string to use the global namespace
+         var uri = 'https://' + document.domain  + namespace;
+         console.log(uri);
+         var socket = io.connect(uri);
 
-     socket.on('user', function(msg) {
-     console.log(msg);
-     var user = msg.data;
-     var user_element = '#' + user.id
-     var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
-     if($(user_element).length && user.active) {
-     $(user_element).replaceWith(userRow);
-     } else if (user.active) {
-     $('#users-table').append(userRow);
-     }
+         socket.on('user', function(msg) {
+             console.log(msg);
+             var user = msg.data;
+             var user_element = '#' + user.id
+             var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+             if($(user_element).length && user.active) {
+                 $(user_element).replaceWith(userRow);
+             } else if (user.active) {
+                 $('#users-table').append(userRow);
+             }
 
-     if($(user_element).length && user.active) {
-     $(user_element).show();
-     }
-     if($(user_element).length && !user.active) {
-     $(user_element).hide();
-     }
-     });
-         
+             if($(user_element).length && user.active) {
+                 $(user_element).show();
+             }
+             if($(user_element).length && !user.active) {
+                 $(user_element).hide();
+             }
+         });
      });
    #+END_SRC
 ** Support for running from the command line

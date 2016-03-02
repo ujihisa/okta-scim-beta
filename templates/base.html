@@ -58,30 +58,29 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
     <script type="text/javascript">
       $(document).ready(function () {
-      namespace = '/test'; // change to an empty string to use the global namespace
-      var uri = 'https://' + document.domain  + namespace;
-      console.log(uri);
-      var socket = io.connect(uri);
+          namespace = '/test'; // change to an empty string to use the global namespace
+          var uri = 'https://' + document.domain  + namespace;
+          console.log(uri);
+          var socket = io.connect(uri);
       
-      socket.on('user', function(msg) {
-      console.log(msg);
-      var user = msg.data;
-      var user_element = '#' + user.id
-      var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
-      if($(user_element).length && user.active) {
-      $(user_element).replaceWith(userRow);
-      } else if (user.active) {
-      $('#users-table').append(userRow);
-      }
+          socket.on('user', function(msg) {
+              console.log(msg);
+              var user = msg.data;
+              var user_element = '#' + user.id
+              var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+              if($(user_element).length && user.active) {
+                  $(user_element).replaceWith(userRow);
+              } else if (user.active) {
+                  $('#users-table').append(userRow);
+              }
       
-      if($(user_element).length && user.active) {
-      $(user_element).show();
-      }
-      if($(user_element).length && !user.active) {
-      $(user_element).hide();
-      }
-      });
-          
+              if($(user_element).length && user.active) {
+                  $(user_element).show();
+              }
+              if($(user_element).length && !user.active) {
+                  $(user_element).hide();
+              }
+          });
       });
     </script>
     <!-- Placed at the end of the document so the pages load faster -->
