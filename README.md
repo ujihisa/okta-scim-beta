@@ -127,7 +127,9 @@ attributes to your SCIM API. In some cases, you might need to
 configure Okta to map non-standard user attributes into the user
 profile for your application.
 
-Here is how our Python/Flask sample application defines these attributes:
+Included in this git repository is a sample application written in
+Python/Flask, this sample application implements SCIM 2.0. Below is
+how this sample application defines these attributes:
 
     userName = db.Column(db.String(250),
                          unique=True,
