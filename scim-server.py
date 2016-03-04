@@ -227,6 +227,13 @@ def groups_get():
     rv = ListResponse([])
     return flask.jsonify(rv.to_scim_resource())
 
+
+@app.route("/db", methods=['POST'])
+def create_db():
+    db.create_all()
+    return "create_all OK"
+
+
 if __name__ == "__main__":
     try:
         User.query.one()
