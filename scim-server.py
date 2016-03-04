@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
 # Copyright © 2016, Okta, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import uuid
 
 from flask import Flask
 from flask import render_template
@@ -54,7 +58,7 @@ class ListResponse():
 
 class User(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True)
     active = db.Column(db.Boolean, default=False)
     userName = db.Column(db.String(250),
                          unique=True,
@@ -144,8 +148,9 @@ def user_get(user_id):
 
 @app.route("/scim/v2/Users", methods=['POST'])
 def users_post():
-    user_resource = request.get_json()
+    user_resource = request.get_json(force=True)
     user = User(user_resource)
+    user.id = str(uuid.uuid4())
     db.session.add(user)
     db.session.commit()
     rv = user.to_scim_resource()
@@ -159,7 +164,7 @@ def users_post():
 
 @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
 def users_put(user_id):
-    user_resource = request.get_json()
+    user_resource = request.get_json(force=True)
     user = User.query.filter_by(id=user_id).one()
     user.update(user_resource)
     db.session.add(user)
@@ -169,7 +174,7 @@ def users_put(user_id):
 
 @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
 def users_patch(user_id):
-    patch_resource = request.get_json()
+    patch_resource = request.get_json(force=True)
     for attribute in ['schemas', 'Operations']:
         if attribute not in patch_resource:
             message = "Payload must contain '{}' attribute.".format(attribute)
@@ -214,6 +219,16 @@ def users_get():
                       total_results=total_results)
     return flask.jsonify(rv.to_scim_resource())
 
+
+@app.route("/scim/v2/Groups", methods=['GET'])
+def groups_get():
+    rv = ListResponse([])
+    return flask.jsonify(rv.to_scim_resource())
+
 if __name__ == "__main__":
+    try:
+        User.query.one()
+    except:
+        db.create_all()
     app.debug = True
     socketio.run(app)
