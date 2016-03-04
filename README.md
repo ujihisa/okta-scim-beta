@@ -161,10 +161,11 @@ on the `id` attribute:
 > mutability of "readOnly", and a "returned" characteristic of
 > "always".
 
-Our sample application defines `id` as a monotonically
-increasing integer:
+Our sample application defines `id` as a UUID, since
+[RFC 7643](https://tools.ietf.org/html/rfc7643) requires that "this identifier MUST be unique across the
+SCIM service provider's entire set of resources."
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True)
 
 **Note:** Your SCIM API can use anything as an `id`, provided that the `id`
 uniquely identifies reach resource, as described in [section 3.1](https://tools.ietf.org/html/rfc7643#section-3.1) of
@@ -215,8 +216,9 @@ creation:
 
     @app.route("/scim/v2/Users", methods=['POST'])
     def users_post():
-        user_resource = request.get_json()
+        user_resource = request.get_json(force=True)
         user = User(user_resource)
+        user.id = str(uuid.uuid4())
         db.session.add(user)
         db.session.commit()
         rv = user.to_scim_resource()
@@ -226,6 +228,10 @@ creation:
                                            user_id=user.userName,
                                            _external=True)
         return resp, 201
+
+Note: `force=True` is set because Okta sends
+`application/scim+json` as the `Content-Type` and the `.get_json()`
+method expects `application/json`.
 
 For more information on user creation via the `/Users` SCIM
 endpoint, see [section 3.3](https://tools.ietf.org/html/rfc7644#section-3.3) of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -311,7 +317,7 @@ Below is how the sample application handles account profile updates:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
     def users_put(user_id):
-        user_resource = request.get_json()
+        user_resource = request.get_json(force=True)
         user = User.query.filter_by(id=user_id).one()
         user.update(user_resource)
         db.session.add(user)
@@ -347,7 +353,7 @@ Below is how the sample application handles account deactivation:
 
     @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
     def users_patch(user_id):
-        patch_resource = request.get_json()
+        patch_resource = request.get_json(force=True)
         for attribute in ['schemas', 'Operations']:
             if attribute not in patch_resource:
                 message = "Payload must contain '{}' attribute.".format(attribute)
@@ -727,6 +733,7 @@ We start by importing the Python packages that the SCIM server will
 use:
 
     import re
+    import uuid
     
     from flask import Flask
     from flask import render_template
@@ -764,7 +771,7 @@ a [SCIM "User" resource schema](https://tools.ietf.org/html/rfc7643#section-4.1)
 
     class User(db.Model):
         __tablename__ = 'users'
-        id = db.Column(db.Integer, primary_key=True)
+        id = db.Column(db.String(36), primary_key=True)
         active = db.Column(db.Boolean, default=False)
         userName = db.Column(db.String(250),
                              unique=True,
@@ -939,9 +946,17 @@ directory of this project.
 ## Support for running from the command line
 
 This bit of code allows you to run the sample application by typing
-`python scim-server.py` from your command line:
+`python scim-server.py` from your command line.
+
+This code also includes a `try/catch` block that creates all tables
+of the `User.query.one()` function throws an error (which should
+only happen if the User table isn't defined.
 
     if __name__ == "__main__":
+        try:
+            User.query.one()
+        except:
+            db.create_all()
         app.debug = True
         socketio.run(app)
 

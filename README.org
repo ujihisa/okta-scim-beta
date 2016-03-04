@@ -170,11 +170,13 @@
    "always".
    #+END_QUOTE
 
-   Our sample application defines =id= as a monotonically
-   increasing integer:
+   Our sample application defines =id= as a UUID, since
+   [[https://tools.ietf.org/html/rfc7643][RFC 7643]] requires that "this identifier MUST be unique across the
+   SCIM service provider's entire set of resources."
+
    #+NAME: user-db-model-id-attribute
    #+BEGIN_SRC python
-     id = db.Column(db.Integer, primary_key=True)
+     id = db.Column(db.String(36), primary_key=True)
    #+END_SRC
 
    *Note:* Your SCIM API can use anything as an =id=, provided that the =id=
@@ -226,8 +228,9 @@
     #+BEGIN_SRC python
       @app.route("/scim/v2/Users", methods=['POST'])
       def users_post():
-          user_resource = request.get_json()
+          user_resource = request.get_json(force=True)
           user = User(user_resource)
+          user.id = str(uuid.uuid4())
           db.session.add(user)
           db.session.commit()
           rv = user.to_scim_resource()
@@ -238,6 +241,10 @@
                                              _external=True)
           return resp, 201
     #+END_SRC
+
+   Note: =force=True= is set because Okta sends
+   =application/scim+json= as the =Content-Type= and the =.get_json()=
+   method expects =application/json=.
 
    For more information on user creation via the =/Users= SCIM
    endpoint, see [[https://tools.ietf.org/html/rfc7644#section-3.3][section 3.3]] of the [[https://tools.ietf.org/html/rfc7644][SCIM 2.0 Protocol Specification]].
@@ -316,7 +323,7 @@
    #+BEGIN_SRC python
      @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
      def users_put(user_id):
-	 user_resource = request.get_json()
+	 user_resource = request.get_json(force=True)
 	 user = User.query.filter_by(id=user_id).one()
 	 user.update(user_resource)
 	 db.session.add(user)
@@ -351,7 +358,7 @@
    #+BEGIN_SRC python
      @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
      def users_patch(user_id):
-	 patch_resource = request.get_json()
+	 patch_resource = request.get_json(force=True)
 	 for attribute in ['schemas', 'Operations']:
 	     if attribute not in patch_resource:
 		 message = "Payload must contain '{}' attribute.".format(attribute)
@@ -720,6 +727,7 @@
    #+NAME: imports
    #+BEGIN_SRC python
      import re
+     import uuid
 
      from flask import Flask
      from flask import render_template
@@ -943,10 +951,19 @@
    #+END_SRC
 ** Support for running from the command line
    This bit of code allows you to run the sample application by typing
-   =python scim-server.py= from your command line:
+   =python scim-server.py= from your command line.
+
+   This code also includes a =try/catch= block that creates all tables
+   of the =User.query.one()= function throws an error (which should
+   only happen if the User table isn't defined.
+
    #+NAME: run-from-command-line
    #+BEGIN_SRC python
      if __name__ == "__main__":
+         try:
+             User.query.one()
+         except:
+             db.create_all()
          app.debug = True
          socketio.run(app)
    #+END_SRC
@@ -1054,6 +1071,9 @@
 * Files 							   :noexport:
 ** scim-server.py
    #+BEGIN_SRC python :tangle scim-server.py :noweb yes :exports none :padline no
+     #!/usr/bin/python
+     # -*- coding: utf-8 -*-
+     #
      # <<license>>
      <<imports>>
 
@@ -1089,6 +1109,12 @@
 
 
      <<users_get>>
+
+
+     @app.route("/scim/v2/Groups", methods=['GET'])
+     def groups_get():
+         rv = ListResponse([])
+         return flask.jsonify(rv.to_scim_resource())
 
      <<run-from-command-line>>
    #+END_SRC
