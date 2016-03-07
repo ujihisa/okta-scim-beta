@@ -379,7 +379,7 @@
    #+END_SRC
    For more details on user attribute updates to =/Users/{id}= SCIM endpoint, see [[https://tools.ietf.org/html/rfc7644#section-3.5.2][section 3.5.2]]
    of the [[https://tools.ietf.org/html/rfc7644][SCIM 2.0 Protocol Specification]].
-** Filtering on =id=, =externalId=, =userName=, and =emails=
+** Filtering on =id=, =userName=, and =emails=
    Being able to filter results by the =id=, =externalId=, or =userName=
    attributes is a critical part of working with Okta. 
 
@@ -404,18 +404,6 @@
    #+BEGIN_QUOTE
    emails eq "jane@example.com"
    #+END_QUOTE
-   
-   #+BEGIN_QUOTE
-   externalId eq "00u1abcdefGHIJKLMNOP"
-   #+END_QUOTE
-
-   Note: The sample application included in this project does not yet
-   demonstrate how to implement storing and filtering by
-   =externalId=. However, Okta strongly recommends that your SCIM
-   implementation supports storing and filtering by =externalId=. For
-   details on supporting =externalId=, see
-   [[https://tools.ietf.org/html/rfc7643#section-3.1][section 3.1]] of [[https://tools.ietf.org/html/rfc7643][RFC 7643]].
-   
    
    At the moment, Okta only supports the =eq= filter operator. However, the
    [[https://tools.ietf.org/html/rfc7644#section-3.4.2.2][filtering capabilities]] described in the SCIM 2.0 Protocol Specification are
@@ -452,6 +440,53 @@
 	 (search_key_name, search_compare, search_value) = m.groups()
          session.query(User).filter(text(":search_key :search_compare :search_value")).all()
     #+END_EXAMPLE
+** Filtering on =externalId=
+   In addition to supporting filtering on =id=, =userName=, and
+   =emails=, your application should also support filtering on
+   =externalId=.
+
+   Okta will use the =externalId= to determine if your application
+   already has an account. =externalId= is used as a stable identifier
+   for users, because the =userName= and email addresses for a user
+   can change.
+
+   Here is an example of an =externalId= filter that might be sent to
+   your application:
+
+   #+BEGIN_QUOTE
+   externalId eq "00u1abcdefGHIJKLMNOP"
+   #+END_QUOTE
+
+   Note: The sample application included in this project does not yet
+   demonstrate how to implement storing and filtering by
+   =externalId=. However, Okta strongly recommends that your SCIM
+   implementation supports storing and filtering by =externalId=. For
+   details on supporting =externalId=, see
+   [[https://tools.ietf.org/html/rfc7643#section-3.1][section 3.1]] of [[https://tools.ietf.org/html/rfc7643][RFC 7643]]. Quoted below:
+
+   #+BEGIN_QUOTE
+      [externalId is] A String that is an identifier for the resource
+      as defined by the provisioning client.  The "externalId" may
+      simplify identification of a resource between the provisioning
+      client and the service provider by allowing the client to use a
+      filter to locate the resource with an identifier from the
+      provisioning domain, obviating the need to store a local mapping
+      between the provisioning domain's identifier of the resource and
+      the identifier used by the service provider.  Each resource MAY
+      include a non-empty "externalId" value.  The value of the
+      "externalId" attribute is always issued by the provisioning
+      client and MUST NOT be specified by the service provider.  The
+      service provider MUST always interpret the externalId as scoped
+      to the provisioning domain.  While the server does not enforce
+      uniqueness, it is assumed that the value's uniqueness is
+      controlled by the client setting the value.
+   #+END_QUOTE
+   
+   When adding support for =externalId= filtering to your application,
+   we suggest that you use OAuth2.0 for authentication and use the
+   OAuth2.0 =client_id= to scope the =externalId= to the provisioning
+   domain.
+
 ** Resource Paging
    When returning large lists of resources, your SCIM implementation
    must support pagination using a /limit/ (=count=) and /offset/
