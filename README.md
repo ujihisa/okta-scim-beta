@@ -625,14 +625,19 @@ Here is the specification for the `/ServiceProviderConfig` endpoint, from
 > Section 5 of RFC7643.  An example representation of SCIM service
 > provider configuration may be found in Section 8.5 of RFC7643.
 
-### Filtering on `metadata.lastModified`
+### Filtering on `meta.lastModified`
 
 Okta does not currently make queries for resources using
-`lastModified` as part of a filter expression.
+`meta.lastModified` as part of a filter expression.
 
 Okta plans to add functionality to fetch incremental updates
 from SCIM APIs by querying for resources using a filter expression
 that requests resources which were updated since the last update.
+
+This will likely be done using the `gt` filter operator. For
+example:
+
+> filter=meta.lastModified gt "2011-05-13T04:42:34Z"
 
 # Submitting to Okta
 
