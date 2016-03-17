@@ -104,7 +104,7 @@ class User(db.Model):
         return rv
 
 
-def scim_error(message, status_code):
+def scim_error(message, status_code=500):
     rv = {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
         "detail": message,

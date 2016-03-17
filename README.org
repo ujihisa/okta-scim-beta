@@ -768,6 +768,7 @@
    use:
    #+NAME: imports
    #+BEGIN_SRC python
+     import os
      import re
      import uuid
 
@@ -790,7 +791,8 @@
    #+NAME: setup
    #+BEGIN_SRC python
      app = Flask(__name__)
-     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
+     database_url = os.getenv('DATABASE_URL', 'sqlite:///test-users.db')
+     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
      db = SQLAlchemy(app)
      socketio = SocketIO(app)
    #+END_SRC
@@ -885,11 +887,13 @@
    Given a =message= and HTTP =status_code=, this will return a Flask
    response with the appropriately formatted SCIM error message.
 
+   By default, this function will return an HTTP status of "[[https://tools.ietf.org/html/rfc2068#section-10.5.1][HTTP 500 Internal Server Error]]".
+
    See [[https://tools.ietf.org/html/rfc7644#section-3.12][section 3.12]] of [[https://tools.ietf.org/html/rfc7644][RFC 7644]] for details.
 
    #+NAME: scim-error
    #+BEGIN_SRC python
-     def scim_error(message, status_code):
+     def scim_error(message, status_code=500):
          rv = {
              "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
              "detail": message,
@@ -1030,6 +1034,7 @@
    | python-socketio  | >=       |     1.0 | Implementation of the Socket.IO realtime server.                       | =https://github.com/miguelgrinberg/python-socketio=        |
    | six              | >=       |  1.10.0 | Python 2 and 3 compatibility library.                                  | =https://pypi.python.org/pypi/six=                         |
    | wsgiref          | >=       |   0.1.2 | Provides validation support for WSGI.                                  | =https://pypi.python.org/pypi/wsgiref=                     |
+   | psycopg2         |          |         | Popular PostgreSQL adapter.                                            | =http://initd.org/psycopg/=                                |
    |------------------+----------+---------+------------------------------------------------------------------------+------------------------------------------------------------|
    
    (This table is used to generate the =requirements.txt= file for this project)
@@ -1076,7 +1081,7 @@
      return output
    #+END_SRC
 
-   #+RESULTS[5c405b5f5d2585aa053c21b101e02f78bede7a67]:
+   #+RESULTS[c3ada03aff7b1810d38c59fa140d477b4e3c0d85]:
    #+BEGIN_SRC python :tangle requirements.txt :noweb yes :exports none :padline no
    Flask>=0.10.1
    Flask-SQLAlchemy>=2.1
@@ -1091,7 +1096,9 @@
    python-socketio>=1.0
    six>=1.10.0
    wsgiref>=0.1.2
+   psycopg2
    #+END_SRC
+
 * License information
   #+NAME: license
   #+BEGIN_SRC text :tangle LICENSE.txt :padline no
@@ -1157,6 +1164,13 @@
      def groups_get():
          rv = ListResponse([])
          return flask.jsonify(rv.to_scim_resource())
+
+
+     @app.route("/db", methods=['POST'])
+     def create_db():
+         db.create_all()
+         return "create_all OK"
+
 
      <<run-from-command-line>>
    #+END_SRC

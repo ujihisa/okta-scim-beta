@@ -772,6 +772,7 @@ repository in the file named `scim-server.py`.
 We start by importing the Python packages that the SCIM server will
 use:
 
+    import os
     import re
     import uuid
     
@@ -793,7 +794,8 @@ their respective technologies to Flask.
 Next we initialize Flask, SQLAlchemy, and SocketIO:
 
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test-users.db'
+    database_url = os.getenv('DATABASE_URL', 'sqlite:///test-users.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     db = SQLAlchemy(app)
     socketio = SocketIO(app)
 
@@ -887,9 +889,11 @@ array of SCIM resources into a
 Given a `message` and HTTP `status_code`, this will return a Flask
 response with the appropriately formatted SCIM error message.
 
+By default, this function will return an HTTP status of "[HTTP 500 Internal Server Error](https://tools.ietf.org/html/rfc2068#section-10.5.1)".
+
 See [section 3.12](https://tools.ietf.org/html/rfc7644#section-3.12) of [RFC 7644](https://tools.ietf.org/html/rfc7644) for details.
 
-    def scim_error(message, status_code):
+    def scim_error(message, status_code=500):
         rv = {
             "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
             "detail": message,
@@ -1144,6 +1148,15 @@ server depends on, and what each dependency does.
 <td class="right">0.1.2</td>
 <td class="left">Provides validation support for WSGI.</td>
 <td class="left">`https://pypi.python.org/pypi/wsgiref`</td>
+</tr>
+
+
+<tr>
+<td class="left">psycopg2</td>
+<td class="left">&#xa0;</td>
+<td class="right">&#xa0;</td>
+<td class="left">Popular PostgreSQL adapter.</td>
+<td class="left">`http://initd.org/psycopg/`</td>
 </tr>
 </tbody>
 </table>
