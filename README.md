@@ -889,7 +889,9 @@ array of SCIM resources into a
 Given a `message` and HTTP `status_code`, this will return a Flask
 response with the appropriately formatted SCIM error message.
 
-By default, this function will return an HTTP status of "[HTTP 500 Internal Server Error](https://tools.ietf.org/html/rfc2068#section-10.5.1)".
+By default, this function will return an HTTP status of "[HTTP 500
+Internal Server Error](https://tools.ietf.org/html/rfc2068#section-10.5.1)". However you should return a more specific
+`status_code` when possible.
 
 See [section 3.12](https://tools.ietf.org/html/rfc7644#section-3.12) of [RFC 7644](https://tools.ietf.org/html/rfc7644) for details.
 
