@@ -15,16 +15,26 @@ using the open SCIM standard.
 
 # Getting into the Okta SCIM Beta
 
-Before building your SCIM Server, please [apply for admission to the SCIM Beta](https://docs.google.com/forms/d/1RKvwFaY8hoMvWn2HEnIsXYY2uaDDZZtF8-p6h2a6e4E/viewform). Okta reviews new applicants on a weekly basis. We will reply within 7 days and give you an estimated timeline.
+Before building your SCIM Server, please [apply for admission to the
+SCIM Beta](https://docs.google.com/forms/d/1RKvwFaY8hoMvWn2HEnIsXYY2uaDDZZtF8-p6h2a6e4E/viewform). Okta reviews new applicants on a weekly basis. We will
+reply within 7 days and give you an estimated timeline.
 
-Once admitted, we’ll collect information about your SCIM Server to get a generic SCIM template application ready for testing. You’ll need to be ready to provide:
+Once admitted, we will collect information about your SCIM Server to
+get a generic SCIM template application ready for testing. You will
+need to be ready to provide:
 
-1.  The oktapreview.com Okta org that you will use to develop your SCIM integration. (If you don't already have an Okta org, create an [Okta Developer account](https://www.okta.com/developer/signup/))
-2.  The Base URL to which Okta will send SCIM requests to your service.
-3.  The Authentication method that Okta will use to authenticate with your service.
-4.  Details on the Base URL and Authentication method are covered below.
+1.  The oktapreview.com Okta org that you will use to develop your
+    SCIM integration. (If you don't already have an Okta org, create
+    an [Okta Developer account](https://www.okta.com/developer/signup/))
+2.  The Base URL to which Okta will send SCIM requests to your
+    service.
+3.  The Authentication method that Okta will use to authenticate with
+    your service.
+4.  Details on the Base URL and Authentication method are covered
+    below.
 
-Once the generic SCIM template app is in your Okta org, you can start testing on your SCIM integration directly with Okta.
+Once the generic SCIM template app is in your Okta org, you can
+start testing on your SCIM integration directly with Okta.
 
 # Understanding of User Provisioning in Okta
 
