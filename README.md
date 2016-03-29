@@ -502,7 +502,13 @@ Below is an example of a `curl` command that makes a request to the
       "totalResults": 1
     }
 
-And here is how the sample application handles pagination with SQLAlchemy:
+> Note: When returning a paged resource, your API should return a
+> capitalized `Resources` value ("Resources"), however Okta will also
+> support a lowercase value ("resources").
+
+One way to handle paged resources is to have your database do the
+paging for you. Here is how the sample application handles
+pagination with SQLAlchemy:
 
     count = int(request.args.get('count', 100))
     start_index = int(request.args.get('startIndex', 1))
