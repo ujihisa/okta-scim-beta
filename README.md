@@ -503,8 +503,10 @@ Below is an example of a `curl` command that makes a request to the
     }
 
 > Note: When returning a paged resource, your API should return a
-> capitalized `Resources` value ("Resources"), however Okta will also
-> support a lowercase value ("resources").
+> capitalized `Resources` JSON key ("Resources"), however Okta will also
+> support a lowercase string ("resources"). Okta will also accept
+> lowercased JSON strings for the keys of child nodes inside
+> `Resources` object ("startindex", "itemsperpage", "totalresults", etc)
 
 One way to handle paged resources is to have your database do the
 paging for you. Here is how the sample application handles
