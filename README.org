@@ -379,11 +379,11 @@
    For more details on user attribute updates to =/Users/{id}= SCIM endpoint, see [[https://tools.ietf.org/html/rfc7644#section-3.5.2][section 3.5.2]]
    of the [[https://tools.ietf.org/html/rfc7644][SCIM 2.0 Protocol Specification]].
 ** Filtering on =id=, =userName=, and =emails=
-   Being able to filter results by the =id=, =externalId=, or =userName=
+   Being able to filter results by the =id=, =userName=, or =emails=
    attributes is a critical part of working with Okta. 
 
    Your SCIM API must be able to filter users by =userName= and should
-   also support filtering by =id= and =externalId=. Filtering support
+   also support filtering by =id= and =emails=. Filtering support
    is required because most provisioning actions require the ability
    for Okta to determine if a user resource exists on your system.
 
@@ -427,7 +427,7 @@
 
    For more details on filtering in SCIM 2.0, see [[https://tools.ietf.org/html/rfc7644#section-3.4.2.2][section 3.4.2.2]]
    of the [[https://tools.ietf.org/html/rfc7644][SCIM 2.0 Protocol Specification]].
-*** Make this better by turning the request into a =text()= query  :noexport:
+*** TODO Make this better by turning the request into a =text()= query :noexport:
     See ABNF here: https://tools.ietf.org/html/rfc7644#page-21
     (My "string" regex above is bad)
 
@@ -439,6 +439,20 @@
 	 (search_key_name, search_compare, search_value) = m.groups()
          session.query(User).filter(text(":search_key :search_compare :search_value")).all()
     #+END_EXAMPLE
+*** TODO Add support for multi-tenant emails searching 		   :noexport:
+    Filtering by =emails= will likely need a different kind of search
+    on a real system, since emails will likely be stored in their own
+    table. For example:
+    
+    |---------+------------------|
+    | user_id | email            |
+    |---------+------------------|
+    |       1 | john@example.com |
+    |       2 | john@example.net |
+    |       3 | jane@example.com |
+    |       4 | jane@example.org |
+    |---------+------------------|
+
 ** Filtering on =externalId=
    In addition to supporting filtering on =id=, =userName=, and
    =emails=, your application should also support filtering on

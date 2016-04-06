@@ -376,11 +376,11 @@ of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
 
 ## Filtering on `id`, `userName`, and `emails`
 
-Being able to filter results by the `id`, `externalId`, or `userName`
+Being able to filter results by the `id`, `userName`, or `emails`
 attributes is a critical part of working with Okta. 
 
 Your SCIM API must be able to filter users by `userName` and should
-also support filtering by `id` and `externalId`. Filtering support
+also support filtering by `id` and `emails`. Filtering support
 is required because most provisioning actions require the ability
 for Okta to determine if a user resource exists on your system.
 
