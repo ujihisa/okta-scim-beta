@@ -2,7 +2,7 @@
   "trigger_url": "https://api.runscope.com/radar/9f3f5fab-b680-495e-8981-da16dece8fd4/trigger", 
   "name": "Okta SCIM 2.0 Tests ", 
   "version": "1.0", 
-  "exported_at": 1461704915, 
+  "exported_at": 1461708715, 
   "steps": [
     {
       "files": [], 
@@ -170,7 +170,7 @@
         {
           "source": "response_json", 
           "property": "results[0].login.md5", 
-          "name": "randomExternalId"
+          "name": "userIdThatDoesNotExist"
         }
       ], 
       "step_type": "request", 
@@ -257,7 +257,7 @@
       ]
     }, 
     {
-      "url": "{{SCIM Base URL}}/Users/{{randomExternalId}}", 
+      "url": "{{SCIM Base URL}}/Users/{{userIdThatDoesNotExist}}}}", 
       "variables": [], 
       "step_type": "request", 
       "auth": {}, 
