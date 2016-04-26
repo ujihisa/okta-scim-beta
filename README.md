@@ -747,6 +747,9 @@ describe the rest of code used in the example.
 
 ## How to run
 
+This example code was written for **Python 2.7** and does not
+currently work with Python 3.
+
 Here is how to run the example code on your machine:
 
 First, start by doing a `git checkout` of this repository, then

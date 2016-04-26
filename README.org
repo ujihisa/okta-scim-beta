@@ -719,6 +719,7 @@
 
      Click the blue "Back to profiles" link when you are done checking
      the Profile Attributes for your application.
+** TODO Explain why pruning the profile attributes is so important :noexport:
 ** Check the Attribute Mappings for Your Application
    The last step for you to complete before submitting your
    application to Okta is to check the User Profile Mappings for your
@@ -756,6 +757,9 @@
   handles the HTTP requests to this sample application, below we
   describe the rest of code used in the example.
 ** How to run
+   This example code was written for *Python 2.7* and does not
+   currently work with Python 3.
+
    Here is how to run the example code on your machine:
 
    First, start by doing a =git checkout= of this repository, then
@@ -1277,3 +1281,5 @@
    #+END_SRC
 * To do 							   :noexport:
 ** TODO Convert example curl output to test fixtures
+** TODO Guidance on how to handle cases where the user model doesn't include =givenName= or =familyName=
+** TODO Reference implementations, esp for Java/.NET classes for objects
