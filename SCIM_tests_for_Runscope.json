@@ -2,7 +2,7 @@
   "trigger_url": "https://api.runscope.com/radar/9f3f5fab-b680-495e-8981-da16dece8fd4/trigger", 
   "name": "Okta SCIM 2.0 Tests ", 
   "version": "1.0", 
-  "exported_at": 1461683996, 
+  "exported_at": 1461704915, 
   "steps": [
     {
       "files": [], 
@@ -12,7 +12,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Test API Credentials", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope "
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Users?count=2&startIndex=1", 
       "scripts": [], 
       "before_scripts": [], 
@@ -69,7 +85,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Please wait while we verify your application", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8 "
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Groups?count=100&startIndex=1", 
       "scripts": [], 
       "before_scripts": [], 
@@ -146,9 +178,6 @@
       "fragment": "", 
       "note": "Get a random user", 
       "headers": {
-        "Authentication": [
-          ""
-        ], 
         "Content-Type": [
           "application/json"
         ], 
@@ -180,7 +209,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Make sure random user doesn't exist", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Users?count=100&filter=userName eq \"{{randomEmail}}\"&startIndex=1", 
       "scripts": [], 
       "before_scripts": [], 
@@ -218,7 +263,23 @@
       "auth": {}, 
       "fragment": "", 
       "note": "Check error schema", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "assertions": [
         {
           "comparison": "equal_number", 
@@ -263,7 +324,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Create Okta user with realisitic values", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Users", 
       "scripts": [], 
       "before_scripts": [], 
@@ -349,7 +426,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Verify that user was created", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Users/{{idUserOne}}", 
       "scripts": [], 
       "before_scripts": [], 
@@ -396,7 +489,23 @@
       "step_type": "request", 
       "auth": {}, 
       "note": "Unassign user from app", 
-      "headers": {}, 
+      "headers": {
+        "Accept-Charset": [
+          "utf-8"
+        ], 
+        "Authentication": [
+          "Bearer Runscope"
+        ], 
+        "Content-Type": [
+          "application/scim+json; charset=utf-8"
+        ], 
+        "Accept": [
+          "application/scim+json"
+        ], 
+        "User-Agent": [
+          "OKTA SCIM Integration"
+        ]
+      }, 
       "url": "{{SCIM Base URL}}/Users/{{idUserOne}}", 
       "scripts": [], 
       "before_scripts": [], 
