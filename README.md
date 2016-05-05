@@ -1015,6 +1015,47 @@ only happen if the User table isn't defined.
             db.create_all()
         app.debug = True
         socketio.run(app)
+        
+## Frequently Ask Questions (FAQ)
+   
+* What are the differences between SCIM 1.1 and 2.0?    
+   
+| Section | SCIM 1.1 | SCIM 2.0 | Notes |
+| --- | --- | --- | --- |
+| Namespaces | <ul><li>urn:scim:schemas:core:1.0</li><li>urn:scim:schemas:extension:enterprise:1.0</li><ul> | <ul><li>urn:ietf:params:scim:schemas:core:2.0:User</li><li>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</li><ul> | Namespaces are different therefore 2.0 is not backwards compatible with 1.1 |
+| Service Provider Config Endpoint | /ServiceProviderConfig<b>s</b> | /ServiceProviderConfig | Notice 2.0 does NOT have an 's' at the end |
+| Patch Protocol | [Section 3.3.2](http://www.simplecloud.info/specs/draft-scim-api-01.html#edit-resource-with-patch) | [Section 3.5.2: Uses JSON Patch](https://tools.ietf.org/html/rfc7644#section-3.5.2) | |
+| Error Response Schema | [Section 3.9](http://www.simplecloud.info/specs/draft-scim-api-01.html#anchor6) | [Section 3.12](https://tools.ietf.org/html/rfc7644#section-3.12) | |
+| Reference Type | N/A | Supports ref type pointing to the full url of another SCIM Resource | |
+| Query by POST /search | N/A | [Section 3.4.3](https://tools.ietf.org/html/rfc7644#section-3.4.3) | |  
+
+* What if the SCIM 1.1 spec isn't clear on a specific use case or scenario?   
+
+    Okta recommends looking at the SCIM 2.0 spec for more clarification.  The SCIM 2.0 spec provides more guidelines and examples for various scenario's.
+
+*  Why do I need to implement the 'type' attribute for attributes such as emails/phoneNumbers/addresses?
+
+    The SCIM User Profile allows for an array of emails.  The only way to differentiate between emails is to use the 'type' sub-attribute.  The SCIM spec recommends in [Section 2.4](https://tools.ietf.org/html/rfc7643#section-2.4)
+> When returning multi-valued attributes, service providers SHOULD
+> canonicalize the value returned (e.g., by returning a value for the
+> sub-attribute "type", such as "home" or "work") when appropriate
+> (e.g., for email addresses and URLs).
+>
+> Service providers MAY return element objects with the same "value"
+> sub-attribute more than once with a different "type" sub-attribute
+> (e.g., the same email address may be used for work and home) but
+> SHOULD NOT return the same (type, value) combination more than once
+> per attribute, as this complicates processing by the client.
+>
+> When defining schema for multi-valued attributes, it is considered a
+> good practice to provide a type attribute that MAY be used for the
+> purpose of canonicalization of values.  In the schema definition for
+> an attribute, the service provider MAY define the recommended
+> canonical values (see Section 7).
+
+* I only have one email/phone number/address in my user profile.  Do I need to implement the array of emails/phone numbers/addresses?
+
+    Yes, the server should return these fields in an array which is specified in the SCIM spec as a multi-valued attribute. [Section 2.4](https://tools.ietf.org/html/rfc7643#section-2.4)
 
 ## Dependencies
 
