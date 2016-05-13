@@ -130,13 +130,15 @@ Included in this git repository is a sample application written in
 Python/Flask, this sample application implements SCIM 2.0. Below is
 how this sample application defines these attributes:
 
-    userName = db.Column(db.String(250),
-                         unique=True,
-                         nullable=False,
-                         index=True)
-    familyName = db.Column(db.String(250))
-    middleName = db.Column(db.String(250))
-    givenName = db.Column(db.String(250))
+```python
+userName = db.Column(db.String(250),
+                     unique=True,
+                     nullable=False,
+                     index=True)
+familyName = db.Column(db.String(250))
+middleName = db.Column(db.String(250))
+givenName = db.Column(db.String(250))
+```
 
 In addition to the basic user schema user attributes described
 above, your SCIM API must also have a unique identifier for each
@@ -164,7 +166,9 @@ Our sample application defines `id` as a UUID, since
 [RFC 7643](https://tools.ietf.org/html/rfc7643) requires that "this identifier MUST be unique across the
 SCIM service provider's entire set of resources."
 
-    id = db.Column(db.String(36), primary_key=True)
+```python
+id = db.Column(db.String(36), primary_key=True)
+```
 
 **Note:** Your SCIM API can use anything as an `id`, provided that the `id`
 uniquely identifies reach resource, as described in [section 3.1](https://tools.ietf.org/html/rfc7643#section-3.1) of
@@ -177,7 +181,9 @@ In our sample application, each user resource has a Boolean
 "active" attribute which is used to mark a user resource as
 "active" or "inactive":
 
-    active = db.Column(db.Boolean, default=False)
+```python
+active = db.Column(db.Boolean, default=False)
+```
 
 ## Functionality
 
@@ -213,20 +219,22 @@ Okta will call this SCIM API endpoint under the following circumstances:
 Below is an example demonstrating how the sample application handles account
 creation:
 
-    @app.route("/scim/v2/Users", methods=['POST'])
-    def users_post():
-        user_resource = request.get_json(force=True)
-        user = User(user_resource)
-        user.id = str(uuid.uuid4())
-        db.session.add(user)
-        db.session.commit()
-        rv = user.to_scim_resource()
-        send_to_browser(rv)
-        resp = flask.jsonify(rv)
-        resp.headers['Location'] = url_for('user_get',
-                                           user_id=user.userName,
-                                           _external=True)
-        return resp, 201
+```python
+@app.route("/scim/v2/Users", methods=['POST'])
+def users_post():
+    user_resource = request.get_json(force=True)
+    user = User(user_resource)
+    user.id = str(uuid.uuid4())
+    db.session.add(user)
+    db.session.commit()
+    rv = user.to_scim_resource()
+    send_to_browser(rv)
+    resp = flask.jsonify(rv)
+    resp.headers['Location'] = url_for('user_get',
+                                       user_id=user.userName,
+                                       _external=True)
+    return resp, 201
+```
 
 Note: `force=True` is set because Okta sends
 `application/scim+json` as the `Content-Type` and the `.get_json()`
@@ -246,30 +254,32 @@ get all users from your app into the system).
 Below is how the sample application handles listing user resources,
 with support for filtering and pagination:
 
-    @app.route("/scim/v2/Users", methods=['GET'])
-    def users_get():
-        query = User.query
-        request_filter = request.args.get('filter')
-        match = None
-        if request_filter:
-            match = re.match('(\w+) eq "([^"]*)"', request_filter)
-        if match:
-            (search_key_name, search_value) = match.groups()
-            search_key = getattr(User, search_key_name)
-            query = query.filter(search_key == search_value)
-        count = int(request.args.get('count', 100))
-        start_index = int(request.args.get('startIndex', 1))
-        if start_index < 1:
-            start_index = 1
-        start_index -= 1
-        query = query.offset(start_index).limit(count)
-        total_results = query.count()
-        found = query.all()
-        rv = ListResponse(found,
-                          start_index=start_index,
-                          count=count,
-                          total_results=total_results)
-        return flask.jsonify(rv.to_scim_resource())
+```python
+@app.route("/scim/v2/Users", methods=['GET'])
+def users_get():
+    query = User.query
+    request_filter = request.args.get('filter')
+    match = None
+    if request_filter:
+        match = re.match('(\w+) eq "([^"]*)"', request_filter)
+    if match:
+        (search_key_name, search_value) = match.groups()
+        search_key = getattr(User, search_key_name)
+        query = query.filter(search_key == search_value)
+    count = int(request.args.get('count', 100))
+    start_index = int(request.args.get('startIndex', 1))
+    if start_index < 1:
+        start_index = 1
+    start_index -= 1
+    query = query.offset(start_index).limit(count)
+    total_results = query.count()
+    found = query.all()
+    rv = ListResponse(found,
+                      start_index=start_index,
+                      count=count,
+                      total_results=total_results)
+    return flask.jsonify(rv.to_scim_resource())
+```
 
 > If you want to see the SQL query that SQLAlchemy is using for
 > the query, add this code after the `query` statement that you want
@@ -285,10 +295,12 @@ Your SCIM 2.0 API must support fetching of users by user id.
 Below is how the sample application handles returning a user resource
 by user id:
 
-    @app.route("/scim/v2/Users/<user_id>", methods=['GET'])
-    def user_get(user_id):
-        user = User.query.filter_by(id=user_id).one()
-        return render_json(user)
+```python
+@app.route("/scim/v2/Users/<user_id>", methods=['GET'])
+def user_get(user_id):
+    user = User.query.filter_by(id=user_id).one()
+    return render_json(user)
+```
 
 For more details on the `/Users/{id}` SCIM endpoint, see [section 3.4.1](https://tools.ietf.org/html/rfc7644#section-3.4.1)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -314,14 +326,16 @@ are:
 
 Below is how the sample application handles account profile updates:
 
-    @app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
-    def users_put(user_id):
-        user_resource = request.get_json(force=True)
-        user = User.query.filter_by(id=user_id).one()
-        user.update(user_resource)
-        db.session.add(user)
-        db.session.commit()
-        return render_json(user)
+```python
+@app.route("/scim/v2/Users/<user_id>", methods=['PUT'])
+def users_put(user_id):
+    user_resource = request.get_json(force=True)
+    user = User.query.filter_by(id=user_id).one()
+    user.update(user_resource)
+    db.session.add(user)
+    db.session.commit()
+    return render_json(user)
+```
 
 For more details on updates to the `/Users/{id}` SCIM endpoint, see [section 3.5.1](https://tools.ietf.org/html/rfc7644#section-3.5.1)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -350,26 +364,28 @@ application. Examples of when this happen are as follows:
 
 Below is how the sample application handles account deactivation:
 
-    @app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
-    def users_patch(user_id):
-        patch_resource = request.get_json(force=True)
-        for attribute in ['schemas', 'Operations']:
-            if attribute not in patch_resource:
-                message = "Payload must contain '{}' attribute.".format(attribute)
-                return message, 400
-        schema_patchop = 'urn:ietf:params:scim:api:messages:2.0:PatchOp'
-        if schema_patchop not in patch_resource['schemas']:
-            return "The 'schemas' type in this request is not supported.", 501
-        user = User.query.filter_by(id=user_id).one()
-        for operation in patch_resource['Operations']:
-            if 'op' not in operation and operation['op'] != 'replace':
-                continue
-            value = operation['value']
-            for key in value.keys():
-                setattr(user, key, value[key])
-        db.session.add(user)
-        db.session.commit()
-        return render_json(user)
+```python
+@app.route("/scim/v2/Users/<user_id>", methods=['PATCH'])
+def users_patch(user_id):
+    patch_resource = request.get_json(force=True)
+    for attribute in ['schemas', 'Operations']:
+        if attribute not in patch_resource:
+            message = "Payload must contain '{}' attribute.".format(attribute)
+            return message, 400
+    schema_patchop = 'urn:ietf:params:scim:api:messages:2.0:PatchOp'
+    if schema_patchop not in patch_resource['schemas']:
+        return "The 'schemas' type in this request is not supported.", 501
+    user = User.query.filter_by(id=user_id).one()
+    for operation in patch_resource['Operations']:
+        if 'op' not in operation and operation['op'] != 'replace':
+            continue
+        value = operation['value']
+        for key in value.keys():
+            setattr(user, key, value[key])
+    db.session.add(user)
+    db.session.commit()
+    return render_json(user)
+```
 
 For more details on user attribute updates to `/Users/{id}` SCIM endpoint, see [section 3.5.2](https://tools.ietf.org/html/rfc7644#section-3.5.2)
 of the [SCIM 2.0 Protocol Specification](https://tools.ietf.org/html/rfc7644).
@@ -404,14 +420,16 @@ much more complicated.
 
 Here is an example of how to implement SCIM filtering in Python:
 
-    request_filter = request.args.get('filter')
-    match = None
-    if request_filter:
-        match = re.match('(\w+) eq "([^"]*)"', request_filter)
-    if match:
-        (search_key_name, search_value) = match.groups()
-        search_key = getattr(User, search_key_name)
-        query = query.filter(search_key == search_value)
+```python
+request_filter = request.args.get('filter')
+match = None
+if request_filter:
+    match = re.match('(\w+) eq "([^"]*)"', request_filter)
+if match:
+    (search_key_name, search_value) = match.groups()
+    search_key = getattr(User, search_key_name)
+    query = query.filter(search_key == search_value)
+```
 
 Note: The sample code above only supports the `eq` operator. We
 recommend that you add support for all of the filter operators
@@ -512,12 +530,14 @@ One way to handle paged resources is to have your database do the
 paging for you. Here is how the sample application handles
 pagination with SQLAlchemy:
 
-    count = int(request.args.get('count', 100))
-    start_index = int(request.args.get('startIndex', 1))
-    if start_index < 1:
-        start_index = 1
-    start_index -= 1
-    query = query.offset(start_index).limit(count)
+```python
+count = int(request.args.get('count', 100))
+start_index = int(request.args.get('startIndex', 1))
+if start_index < 1:
+    start_index = 1
+start_index -= 1
+query = query.offset(start_index).limit(count)
+```
 
 Note: This code subtracts "1" from the
 `startIndex`, because `startIndex` is [1-indexed](https://tools.ietf.org/html/rfc7644#section-3.4.2) and
@@ -782,18 +802,20 @@ repository in the file named `scim-server.py`.
 We start by importing the Python packages that the SCIM server will
 use:
 
-    import os
-    import re
-    import uuid
-    
-    from flask import Flask
-    from flask import render_template
-    from flask import request
-    from flask import url_for
-    from flask_socketio import SocketIO
-    from flask_socketio import emit
-    from flask_sqlalchemy import SQLAlchemy
-    import flask
+```python
+import os
+import re
+import uuid
+
+from flask import Flask
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask_socketio import SocketIO
+from flask_socketio import emit
+from flask_sqlalchemy import SQLAlchemy
+import flask
+```
 
 ## Setup
 
@@ -803,11 +825,13 @@ their respective technologies to Flask.
 
 Next we initialize Flask, SQLAlchemy, and SocketIO:
 
-    app = Flask(__name__)
-    database_url = os.getenv('DATABASE_URL', 'sqlite:///test-users.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    db = SQLAlchemy(app)
-    socketio = SocketIO(app)
+```python
+app = Flask(__name__)
+database_url = os.getenv('DATABASE_URL', 'sqlite:///test-users.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+db = SQLAlchemy(app)
+socketio = SocketIO(app)
+```
 
 ## SQLAlchemy support for the "users" table:
 
@@ -821,50 +845,52 @@ the code that handles PUT calls to `/Users/{id}`.
 The `to_scim_resource` method is used to turn a User object into
 a [SCIM "User" resource schema](https://tools.ietf.org/html/rfc7643#section-4.1).
 
-    class User(db.Model):
-        __tablename__ = 'users'
-        id = db.Column(db.String(36), primary_key=True)
-        active = db.Column(db.Boolean, default=False)
-        userName = db.Column(db.String(250),
-                             unique=True,
-                             nullable=False,
-                             index=True)
-        familyName = db.Column(db.String(250))
-        middleName = db.Column(db.String(250))
-        givenName = db.Column(db.String(250))
-    
-        def __init__(self, resource):
-            self.update(resource)
-    
-        def update(self, resource):
-            for attribute in ['userName', 'active']:
-                if attribute in resource:
-                    setattr(self, attribute, resource[attribute])
-            for attribute in ['givenName', 'middleName', 'familyName']:
-                if attribute in resource['name']:
-                    setattr(self, attribute, resource['name'][attribute])
-    
-        def to_scim_resource(self):
-            rv = {
-                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "id": self.id,
-                "userName": self.userName,
-                "name": {
-                    "familyName": self.familyName,
-                    "givenName": self.givenName,
-                    "middleName": self.middleName,
-                },
-                "active": self.active,
-                "meta": {
-                    "resourceType": "User",
-                    "location": url_for('user_get',
-                                        user_id=self.id,
-                                        _external=True),
-                    # "created": "2010-01-23T04:56:22Z",
-                    # "lastModified": "2011-05-13T04:42:34Z",
-                }
+```python
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.String(36), primary_key=True)
+    active = db.Column(db.Boolean, default=False)
+    userName = db.Column(db.String(250),
+                         unique=True,
+                         nullable=False,
+                         index=True)
+    familyName = db.Column(db.String(250))
+    middleName = db.Column(db.String(250))
+    givenName = db.Column(db.String(250))
+
+    def __init__(self, resource):
+        self.update(resource)
+
+    def update(self, resource):
+        for attribute in ['userName', 'active']:
+            if attribute in resource:
+                setattr(self, attribute, resource[attribute])
+        for attribute in ['givenName', 'middleName', 'familyName']:
+            if attribute in resource['name']:
+                setattr(self, attribute, resource['name'][attribute])
+
+    def to_scim_resource(self):
+        rv = {
+            "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+            "id": self.id,
+            "userName": self.userName,
+            "name": {
+                "familyName": self.familyName,
+                "givenName": self.givenName,
+                "middleName": self.middleName,
+            },
+            "active": self.active,
+            "meta": {
+                "resourceType": "User",
+                "location": url_for('user_get',
+                                    user_id=self.id,
+                                    _external=True),
+                # "created": "2010-01-23T04:56:22Z",
+                # "lastModified": "2011-05-13T04:42:34Z",
             }
-            return rv
+        }
+        return rv
+```
 
 ## Support for SCIM Query resources
 
@@ -872,27 +898,29 @@ We also define a `ListResponse` class, which is used to return an
 array of SCIM resources into a
 [Query Resource](https://tools.ietf.org/html/rfc7644#section-3.4.2).
 
-    class ListResponse():
-        def __init__(self, list, start_index=1, count=None, total_results=0):
-            self.list = list
-            self.start_index = start_index
-            self.count = count
-            self.total_results = total_results
-    
-        def to_scim_resource(self):
-            rv = {
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
-                "totalResults": self.total_results,
-                "startIndex": self.start_index,
-                "Resources": []
-            }
-            resources = []
-            for item in self.list:
-                resources.append(item.to_scim_resource())
-            if self.count:
-                rv['itemsPerPage'] = self.count
-            rv['Resources'] = resources
-            return rv
+```python
+class ListResponse():
+    def __init__(self, list, start_index=1, count=None, total_results=0):
+        self.list = list
+        self.start_index = start_index
+        self.count = count
+        self.total_results = total_results
+
+    def to_scim_resource(self):
+        rv = {
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+            "totalResults": self.total_results,
+            "startIndex": self.start_index,
+            "Resources": []
+        }
+        resources = []
+        for item in self.list:
+            resources.append(item.to_scim_resource())
+        if self.count:
+            rv['itemsPerPage'] = self.count
+        rv['Resources'] = resources
+        return rv
+```
 
 ## Support for SCIM error messages
 
@@ -905,13 +933,15 @@ Internal Server Error](https://tools.ietf.org/html/rfc2068#section-10.5.1)". How
 
 See [section 3.12](https://tools.ietf.org/html/rfc7644#section-3.12) of [RFC 7644](https://tools.ietf.org/html/rfc7644) for details.
 
-    def scim_error(message, status_code=500):
-        rv = {
-            "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
-            "detail": message,
-            "status": str(status_code)
-        }
-        return flask.jsonify(rv), status_code
+```python
+def scim_error(message, status_code=500):
+    rv = {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        "detail": message,
+        "status": str(status_code)
+    }
+    return flask.jsonify(rv), status_code
+```
 
 ## Socket.IO support
 
@@ -923,9 +953,11 @@ When you load the sample application (the "/" route), your browser
 will be sent a web application that uses Socket.IO to display
 updates without the need for you to reload the page:
 
-    @app.route('/')
-    def hello():
-        return render_template('base.html')
+```python
+@app.route('/')
+def hello():
+    return render_template('base.html')
+```
 
 This page is updated using the functions below:
 
@@ -943,28 +975,30 @@ This page is updated using the functions below:
 
 The code described above is as follows:
 
-    def send_to_browser(obj):
-        socketio.emit('user',
-                      {'data': obj},
-                      broadcast=True,
-                      namespace='/test')
-    
-    
-    def render_json(obj):
-        rv = obj.to_scim_resource()
-        send_to_browser(rv)
-        return flask.jsonify(rv)
-    
-    
-    @socketio.on('connect', namespace='/test')
-    def test_connect():
-        for user in User.query.filter_by(active=True).all():
-            emit('user', {'data': user.to_scim_resource()})
-    
-    
-    @socketio.on('disconnect', namespace='/test')
-    def test_disconnect():
-        print('Client disconnected')
+```python
+def send_to_browser(obj):
+    socketio.emit('user',
+                  {'data': obj},
+                  broadcast=True,
+                  namespace='/test')
+
+
+def render_json(obj):
+    rv = obj.to_scim_resource()
+    send_to_browser(rv)
+    return flask.jsonify(rv)
+
+
+@socketio.on('connect', namespace='/test')
+def test_connect():
+    for user in User.query.filter_by(active=True).all():
+        emit('user', {'data': user.to_scim_resource()})
+
+
+@socketio.on('disconnect', namespace='/test')
+def test_disconnect():
+    print('Client disconnected')
+```
 
 ## Socket.IO application
 
@@ -973,31 +1007,33 @@ described above. For the full contents of the HTML that this
 JavaScript is part of, see the `base.html` file in the `templates`
 directory of this project.
 
-    $(document).ready(function () {
-        namespace = '/test'; // change to an empty string to use the global namespace
-        var uri = 'https://' + document.domain  + namespace;
-        console.log(uri);
-        var socket = io.connect(uri);
-    
-        socket.on('user', function(msg) {
-            console.log(msg);
-            var user = msg.data;
-            var user_element = '#' + user.id
-            var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
-            if($(user_element).length && user.active) {
-                $(user_element).replaceWith(userRow);
-            } else if (user.active) {
-                $('#users-table').append(userRow);
-            }
-    
-            if($(user_element).length && user.active) {
-                $(user_element).show();
-            }
-            if($(user_element).length && !user.active) {
-                $(user_element).hide();
-            }
-        });
+```javascript
+$(document).ready(function () {
+    namespace = '/test'; // change to an empty string to use the global namespace
+    var uri = 'https://' + document.domain  + namespace;
+    console.log(uri);
+    var socket = io.connect(uri);
+
+    socket.on('user', function(msg) {
+        console.log(msg);
+        var user = msg.data;
+        var user_element = '#' + user.id
+        var userRow = '<tr id="' + user.id + '"><td>' + user.id + '</td><td>' + user.name.givenName + '</td><td>' + user.name.familyName + '</td><td>' + user.userName + '</td></tr>';
+        if($(user_element).length && user.active) {
+            $(user_element).replaceWith(userRow);
+        } else if (user.active) {
+            $('#users-table').append(userRow);
+        }
+
+        if($(user_element).length && user.active) {
+            $(user_element).show();
+        }
+        if($(user_element).length && !user.active) {
+            $(user_element).hide();
+        }
     });
+});
+```
 
 ## Support for running from the command line
 
@@ -1008,14 +1044,16 @@ This code also includes a `try/catch` block that creates all tables
 of the `User.query.one()` function throws an error (which should
 only happen if the User table isn't defined.
 
-    if __name__ == "__main__":
-        try:
-            User.query.one()
-        except:
-            db.create_all()
-        app.debug = True
-        socketio.run(app)
-        
+```python
+if __name__ == "__main__":
+    try:
+        User.query.one()
+    except:
+        db.create_all()
+    app.debug = True
+    socketio.run(app)
+```
+
 ## Frequently Ask Questions (FAQ)
    
 * What are the differences between SCIM 1.1 and 2.0?    
